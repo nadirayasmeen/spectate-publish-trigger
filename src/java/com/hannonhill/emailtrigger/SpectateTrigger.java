@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,16 +33,22 @@ import com.cms.publish.PublishTrigger;
 import com.cms.publish.PublishTriggerEntityTypes;
 import com.cms.publish.PublishTriggerException;
 import com.cms.publish.PublishTriggerInformation;
+import com.hannonhill.cascade.api.asset.common.Identifier;
+import com.hannonhill.cascade.api.asset.common.PathIdentifier;
+import com.hannonhill.cascade.api.asset.common.StructuredDataNode;
+import com.hannonhill.cascade.api.asset.home.Page;
+import com.hannonhill.cascade.api.operation.Read;
+import com.hannonhill.cascade.api.operation.result.ModelOperationResult;
+import com.hannonhill.cascade.api.operation.result.ReadOperationResult;
+import com.hannonhill.cascade.model.dom.identifier.EntityType;
+import com.hannonhill.cascade.model.dom.identifier.EntityTypes;
 import com.hannonhill.www.ws.ns.AssetOperationService.AssetOperationHandler;
 import com.hannonhill.www.ws.ns.AssetOperationService.AssetOperationHandlerServiceLocator;
 import com.hannonhill.www.ws.ns.AssetOperationService.Authentication;
 import com.hannonhill.www.ws.ns.AssetOperationService.EntityTypeString;
-import com.hannonhill.www.ws.ns.AssetOperationService.Identifier;
-import com.hannonhill.www.ws.ns.AssetOperationService.Page;
 import com.hannonhill.www.ws.ns.AssetOperationService.Path;
 import com.hannonhill.www.ws.ns.AssetOperationService.ReadResult;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredData;
-import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNode;
 
 /**
  * Creates a Spectate Email from a Page in Cascade Server
@@ -105,9 +112,8 @@ public class SpectateTrigger implements PublishTrigger {
 				System.out.println("Creating Spectate Data...");
 				t.getOutreachInfo(information.getEntityId(),
 						information.getEntityPath());
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (Exception e) {
+			    LOG.info("Error occurred when gathering data to send to Spectate", e);
 			}
 			if (!t.outReachEmail.getName().equals("")) {
 			
@@ -122,7 +128,6 @@ public class SpectateTrigger implements PublishTrigger {
 					e.printStackTrace();
 				}
 			}
-			
 			break;
 		}
 	}
@@ -131,7 +136,7 @@ public class SpectateTrigger implements PublishTrigger {
 		Path p = new Path(path, getSiteId(), getSiteName());
 		p.setPath(path);
 		p.setSiteName(getSiteName());
-		Identifier identifier = new Identifier(id, p, EntityTypeString.destination,
+		com.hannonhill.www.ws.ns.AssetOperationService.Identifier identifier = new com.hannonhill.www.ws.ns.AssetOperationService.Identifier(id, p, EntityTypeString.destination,
 				false);
 	
 		URL url = null;
@@ -167,53 +172,42 @@ public class SpectateTrigger implements PublishTrigger {
 	/*
 	 * Gather Page parameters
 	 */
-	public void getOutreachInfo(String id, String path) throws IOException {
-		//Path p = new Path(path, siteId, siteName);
-		//p.setPath(path);
-		//p.setSiteName(siteName);
-		//Identifier identifier = new Identifier(id, p, EntityTypeString.page,
-			//	false);
-		Identifier identifier = new Identifier();
-		//identifier.setPath(p);
-		identifier.setRecycled(false);
-		identifier.setId(id);
-		identifier.setType(EntityTypeString.page);
-		URL url = null;
-		try {
-			url = new URL(urlString);
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		Authentication auth = new Authentication();
-		ReadResult result = new ReadResult();
-		auth.setUsername(getUser());
-		auth.setPassword(getPass());
-		AssetOperationHandler handler;
-		try {
-			handler = new AssetOperationHandlerServiceLocator()
-					.getAssetOperationService(url);
-			result = handler.read(auth, identifier);
-		} catch (ServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		if (result.getSuccess().equals("true")) {
-			String contentType = result.getAsset().getPage().getContentTypePath();
-			
-			if(!contentType.contains("Outreach")){
-		//		return null;
-			}
-			
-			
-			Boolean email = false;
-			com.hannonhill.www.ws.ns.AssetOperationService.Page page = result
-					.getAsset().getPage();
+	public void getOutreachInfo(final String id, String path) throws Exception {
+        Read readPage = new Read();
+        readPage.setToRead(new Identifier()
+        {
+            
+            public EntityType getType()
+            {
+                return EntityTypes.TYPE_PAGE;
+            }
+            
+            public String getId()
+            {
+                return id;
+            }
+        });
+        
+        readPage.setUsername(getUser());
+        ReadOperationResult result = (ReadOperationResult) readPage.perform();
+        Page page = (Page) result.getAsset();
+        
+        if (page != null) {
+            // return unless page has a DD called "Outreach"
+            String ddPath = page.getDataDefinitionPath();
+            if (ddPath == null || !ddPath.equals("Outreach"))
+            {
+                LOG.info("Page's DD is: " + ddPath + ". Skipping rest of trigger.");
+                return;
+            }
+            
+            // return unless email field is set to "Yes"
+            StructuredDataNode email = page.getStructuredDataNode("email");
+            if (email == null || !Arrays.asList(email.getTextValues()).contains("Yes"))
+            {
+                LOG.info("This page is not set to send email on publish. Skipping rest of trigger.");
+                return;
+            }
 
 			String title = page.getMetadata().getTitle();
 			String content = "";
@@ -222,24 +216,19 @@ public class SpectateTrigger implements PublishTrigger {
 			String testRecepients = "";
 			String abstractContent = "";
 			String footer = StringEscapeUtils.escapeJson("<em>Copyright &#169; 2015 Washoe County, All rights reserved.</em>\n    <br />\n\t\t{{ unsubscribe_link }}\n\t\t<br />\n\t\t<strong>Our mailing address is:</strong>\n\t\t<br />\n\t\t{{ spam_compliance_address }}\n");
-			StructuredData structuredData = page.getStructuredData();
-			StructuredDataNode[] nodes = structuredData.getStructuredDataNodes().getStructuredDataNode();
+			StructuredDataNode[] nodes = page.getStructuredData();
 			String day = null;
 			String time = null;
 			
-			//get rendered page content
-			outReachEmail.setMainContent(getRenderedContent(page));
-
-			for (int i = 0; i < nodes.length; i++) {
-				String name = nodes[i].getIdentifier();
-				String value = nodes[i].getText();
-				System.out.println(name + " : " + value);
+			for (StructuredDataNode node : nodes) {
+				String name = node.getIdentifier();
+				String value = node.getTextValue();
+				String[] values = node.getTextValues();
+				LOG.debug("Current SD node: " + name + " : " + value + " : " + Arrays.toString(values));
 
 				if (name.equals("abstract")) {
 					abstractContent = value;
-				} else if (name.equals("header")) {
-
-				} 
+				}
 				else if (name.equals("template")) {
 					template=value;
 				}
@@ -248,79 +237,55 @@ public class SpectateTrigger implements PublishTrigger {
 				}
 				else if (name.equals("content")) {
 					content = value;
-				} else if (name.equals("add")) {
-
-				} else if (name.equals("distribution")) {
-
-				} else if (name.equals("related")) {
-
-				} else if (name.equals("email")) {
-					if (value.equals("::CONTENT-XML-CHECKBOX::Yes"))
-						email = true;
 				}
 				else if(name.equals("testers")){
 					testRecepients = value;
 				}
 				// campaign
 				else if (name.equals("list")) {
-					String[] names = value.split("::CONTENT-XML-CHECKBOX::");
-					for (String n : names) {
-
+					for (String n : values) {
 						if (!n.isEmpty()) {
-							System.out.println("Adding Campaign: " + n);
+							LOG.debug("Adding Campaign: " + n);
 							campaignNames.add(n);
-
 						}
 					}
-				} 
-				/*else if (name.equals("schedule")) { // Date
-					Date t = new Date(Long.parseLong(value));
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-					day = sdf.format(t);
-					System.out.println("Scheduled Day: " + sdf.format(t));
-					
-						t = new Date(Long.parseLong(value));
-						sdf = new SimpleDateFormat("h:mm a");
-						time = sdf.format(t);
-						System.out.println("Scheduled Time: " + sdf.format(t));
-				
-				}*/
+				}
 			}
-				if (email) {
-		
-					outReachEmail.setName(title);
-					outReachEmail.setSubject(title);
-					outReachEmail.setTextBody(content);
-					outReachEmail.setTestRecepients(testRecepients);
-					outReachEmail.setMainContent(content);
-					outReachEmail.setMainContent(getRenderedContent(page));
-					if (day != null)
-						outReachEmail.setScheduledAtDate(day);
-					if (time != null)
-						outReachEmail.setScheduledAtTime(time);
-				//	outReachEmail.setCustomHTMLBody(getRenderedContent(page));
-					outReachEmail.setStatus("send_now");
-					// defaults
-					outReachEmail.setFromType("generic");
-					outReachEmail.setFromName("Washoe County");
-					outReachEmail.setFromEmail(fromEmail);
-					
-					//if html? create header/footer/main_content
-					//HTML
-					//outReachEmail.setBodyType("text_and_html");
-					outReachEmail.setBodyType("html_only");
-				//	outReachEmail.setBodyType("text_only");
-					outReachEmail.setLayoutType("custom");
-					outReachEmail.setCustomHTMLBody(getRenderedContent(page));
-					//outReachEmail.setHTMLBody(null);
-					outReachEmail.setHeader("");
-					outReachEmail.setFooter(footer);
-					//outReachEmail.setFooter("<p>{{ spam_compliance_address }}</p><p>&nbsp;</p><p><span style=\"font-family: arial,helvetica,sans-serif; font-size: xx-small;\"><!--{{ unsubscribe_link }}</span>--></span></p>");
-					//outReachEmail.setFooter("{{ unsubscribe_link }}"); //KEEP
-					outReachEmail.setCustomType("supplied");
-		//			outReachEmail.setCustomEmailId(2333);
-		
-			}
+
+            // get rendered page content
+            outReachEmail.setMainContent(getRenderedContent(page));
+            outReachEmail.setName(title);
+            outReachEmail.setSubject(title);
+            outReachEmail.setTextBody(content);
+            outReachEmail.setTestRecepients(testRecepients);
+            outReachEmail.setMainContent(content);
+            outReachEmail.setMainContent(getRenderedContent(page));
+            if (day != null)
+            	outReachEmail.setScheduledAtDate(day);
+            if (time != null)
+            	outReachEmail.setScheduledAtTime(time);
+            //	outReachEmail.setCustomHTMLBody(getRenderedContent(page));
+            outReachEmail.setStatus("send_now");
+            // defaults
+            outReachEmail.setFromType("generic");
+            outReachEmail.setFromName("Washoe County");
+            outReachEmail.setFromEmail(fromEmail);
+            
+            //if html? create header/footer/main_content
+            //HTML
+            //outReachEmail.setBodyType("text_and_html");
+            outReachEmail.setBodyType("html_only");
+            //	outReachEmail.setBodyType("text_only");
+            outReachEmail.setLayoutType("custom");
+            outReachEmail.setCustomHTMLBody(getRenderedContent(page));
+            //outReachEmail.setHTMLBody(null);
+            outReachEmail.setHeader("");
+            outReachEmail.setFooter(footer);
+            //outReachEmail.setFooter("<p>{{ spam_compliance_address }}</p><p>&nbsp;</p><p><span style=\"font-family: arial,helvetica,sans-serif; font-size: xx-small;\"><!--{{ unsubscribe_link }}</span>--></span></p>");
+            //outReachEmail.setFooter("{{ unsubscribe_link }}"); //KEEP
+            outReachEmail.setCustomType("supplied");
+            //outReachEmail.setCustomEmailId(2333);
+			
 		}//read page
 		//return null
 	}
@@ -419,9 +384,7 @@ public class SpectateTrigger implements PublishTrigger {
 		return this.domain;
 	}
 	private String getRenderedContent(Page page) throws IOException{
-		String id = page.getId();
-		String path = page.getPath();
-		String configId = "";
+        String path = page.getPath();
 		StringBuffer content = new StringBuffer();
 
 		String pageURLString = getWebUrl() +  path + "-spectate.html";
@@ -444,8 +407,6 @@ public class SpectateTrigger implements PublishTrigger {
 		String fullContent = StringEscapeUtils.escapeJson(content.toString());
 		
 		String templateString = fullContent;
-		
-		
 		return templateString;
 		//return content.toString();
 	}

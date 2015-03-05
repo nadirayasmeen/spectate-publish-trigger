@@ -56,6 +56,13 @@
           <systemPath>${basedir}/publishtrigger-7.12.jar</systemPath>
         </dependency>
         <dependency>
+          <groupId>com.hannonhill</groupId>
+          <artifactId>cascade-api</artifactId>
+          <version>7.12</version>
+          <scope>system</scope>
+          <systemPath>${basedir}/cascade-api-7.12.jar</systemPath>
+        </dependency>
+        <dependency>
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
           <version>1.2.14</version>
