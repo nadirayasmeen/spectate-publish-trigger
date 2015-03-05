@@ -19,6 +19,7 @@ import java.util.Map;
 import javax.xml.rpc.ServiceException;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
@@ -63,6 +64,7 @@ public class SpectateTrigger implements PublishTrigger {
 	private Map<String, String> allCampaigns = new HashMap(); // id, name																// address
 	private Map<String, Campaign> campaigns = new HashMap<String, Campaign>();
 	private Email outReachEmail = new Email();
+	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
 
 	/*
 	 * (non-Javadoc)
