@@ -103,6 +103,12 @@ public class SpectateTrigger implements PublishTrigger {
 			if(this.parameters.get("webUrl").length() > 0){
 				t.setWebUrl(this.parameters.get("webUrl"));
 			}
+			if(this.parameters.get("user").length() > 0){
+				t.setWebUrl(this.parameters.get("user"));
+			}
+			if(this.parameters.get("pass").length() > 0){
+				t.setWebUrl(this.parameters.get("pass"));
+			}
 			try {
 				System.out.println("Creating Spectate Data...");
 				t.getOutreachInfo(information.getEntityId(),
