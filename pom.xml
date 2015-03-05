@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>Cascade-Java-Web-Services-Example-Project</groupId>
-    <artifactId>Cascade-Java-Web-Services-Example-Project</artifactId>
-    <version>6.8.3</version>
+    <groupId>com.hannonhill</groupId>
+    <artifactId>spectate-email-publish-trigger</artifactId>
+    <version>1.0</version>
 
     <dependencies>
         <dependency>
