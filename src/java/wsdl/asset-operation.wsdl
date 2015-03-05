@@ -7799,7 +7799,7 @@
 
         <wsdl:port binding="impl:AssetOperationServiceSoapBinding" name="AssetOperationService">
 
-            <wsdlsoap:address location="http://localhost:8080/ws/services/AssetOperationService"/>
+            <wsdlsoap:address location="https://wcwashoecmsdev.admin.washoecounty.us:8443/ws/services/AssetOperationService"/>
 
         </wsdl:port>
 
