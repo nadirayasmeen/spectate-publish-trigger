@@ -14,12 +14,9 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import org.json.simple.parser.ParseException;
-
 public class WebService {
 
-	public static String httpGet(String urlStr) throws IOException,
-			ParseException {
+	public static String httpGet(String urlStr) throws IOException {
 		URL url = new URL(urlStr);
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 

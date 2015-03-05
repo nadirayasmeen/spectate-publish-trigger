@@ -48,6 +48,13 @@
         	<artifactId>commons-lang3</artifactId>
         	<version>3.3.2</version>
         </dependency>
+        <dependency>
+          <groupId>com.hannonhill</groupId>
+          <artifactId>publish-trigger</artifactId>
+          <version>7.12</version>
+          <scope>system</scope>
+          <systemPath>${basedir}/publishtrigger-7.12.jar</systemPath>
+        </dependency>
     </dependencies>
 
     <build>

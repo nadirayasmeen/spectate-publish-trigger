@@ -7,33 +7,21 @@ package com.hannonhill.emailtrigger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.rmi.RemoteException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.xml.rpc.ServiceException;
 
-import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.simple.*;
-import org.json.simple.parser.ParseException;
+import org.json.JSONException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -49,7 +37,6 @@ import com.hannonhill.www.ws.ns.AssetOperationService.Authentication;
 import com.hannonhill.www.ws.ns.AssetOperationService.EntityTypeString;
 import com.hannonhill.www.ws.ns.AssetOperationService.Identifier;
 import com.hannonhill.www.ws.ns.AssetOperationService.Page;
-import com.hannonhill.www.ws.ns.AssetOperationService.PageConfiguration;
 import com.hannonhill.www.ws.ns.AssetOperationService.Path;
 import com.hannonhill.www.ws.ns.AssetOperationService.ReadResult;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredData;
@@ -336,15 +323,13 @@ public class SpectateTrigger implements PublishTrigger {
 		//return null
 	}
 
-	private String getParameter(JSONObject jsonObject, String parent,
-			String child) {
-		if (parent == null)
-			return jsonObject.getJSONObject(child).toString();
-		else
-			return jsonObject.getJSONObject(parent).get(child).toString();
+	private String getParameter(JSONObject jsonObject, String parent, String child) {
+        if (parent == null)
+            return jsonObject.getJSONObject(child).toString();
+
+        return jsonObject.getJSONObject(parent).get(child).toString();
 	}
 
-	@SuppressWarnings("resource")
 	private void setApiKey(String apiKey) {
 		this.apiKey = apiKey;
 	}
@@ -354,7 +339,7 @@ public class SpectateTrigger implements PublishTrigger {
 	}
 
 	// Gets ALL campaigns
-	private String getCampaigns() throws IOException, ParseException {
+	private String getCampaigns() throws IOException {
 		String reply = WebService.httpGet(getDomain()
 				+ "/marketing/campaigns.json?api_key=" + getApiKey()
 				+ "&per_page=1");
@@ -383,14 +368,14 @@ public class SpectateTrigger implements PublishTrigger {
 		outReachEmail.generateJSON();
 	}
 
-	private void getSelectedCampaigns() throws IOException, ParseException {
+	private void getSelectedCampaigns() throws IOException {
 		// get ALL campaigns
 		try {
 			this.getAllCampaigns(this.getCampaigns());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ParseException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -421,8 +406,7 @@ public class SpectateTrigger implements PublishTrigger {
 			}
 		}
 	}
-	private String getCampaignID(String name) throws JSONException,
-			IOException, ParseException {
+	private String getCampaignID(String name) throws JSONException, IOException {
 		String leadURL = getDomain() + "/marketing/campaigns?api_key="
 				+ getApiKey();
 		JSONObject campaigns = new JSONObject(this.getCampaigns());
@@ -464,7 +448,7 @@ public class SpectateTrigger implements PublishTrigger {
 		//return content.toString();
 	}
 
-	private JSONObject getLead(String id) throws IOException, ParseException {
+	private JSONObject getLead(String id) throws IOException {
 		String leadURL = getDomain() + "/leads_visitors/leads/" + id
 				+ ".json?api_key=" + getApiKey();
 		String reply = WebService.httpGet(leadURL);
@@ -492,7 +476,7 @@ public class SpectateTrigger implements PublishTrigger {
 		return ids;
 	}
 
-	private String getLeadEmail(String id) throws IOException, ParseException {
+	private String getLeadEmail(String id) throws IOException {
 		String email = getParameter(getLead(id), "lead", "email");
 		return email;
 	}
