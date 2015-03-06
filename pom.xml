@@ -71,7 +71,6 @@
 
     <build>
         <sourceDirectory>${basedir}/src/java</sourceDirectory>
-        <testSourceDirectory>${basedir}/src/java</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.zeroturnaround</groupId>
