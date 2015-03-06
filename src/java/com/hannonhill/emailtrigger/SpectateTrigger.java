@@ -7,7 +7,6 @@ package com.hannonhill.emailtrigger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
@@ -23,7 +22,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -34,11 +32,9 @@ import com.cms.publish.PublishTriggerEntityTypes;
 import com.cms.publish.PublishTriggerException;
 import com.cms.publish.PublishTriggerInformation;
 import com.hannonhill.cascade.api.asset.common.Identifier;
-import com.hannonhill.cascade.api.asset.common.PathIdentifier;
 import com.hannonhill.cascade.api.asset.common.StructuredDataNode;
 import com.hannonhill.cascade.api.asset.home.Page;
 import com.hannonhill.cascade.api.operation.Read;
-import com.hannonhill.cascade.api.operation.result.ModelOperationResult;
 import com.hannonhill.cascade.api.operation.result.ReadOperationResult;
 import com.hannonhill.cascade.model.dom.identifier.EntityType;
 import com.hannonhill.cascade.model.dom.identifier.EntityTypes;
@@ -48,7 +44,6 @@ import com.hannonhill.www.ws.ns.AssetOperationService.Authentication;
 import com.hannonhill.www.ws.ns.AssetOperationService.EntityTypeString;
 import com.hannonhill.www.ws.ns.AssetOperationService.Path;
 import com.hannonhill.www.ws.ns.AssetOperationService.ReadResult;
-import com.hannonhill.www.ws.ns.AssetOperationService.StructuredData;
 
 /**
  * Creates a Spectate Email from a Page in Cascade Server
@@ -68,7 +63,7 @@ public class SpectateTrigger implements PublishTrigger {
 	private List<String> campaignNames = new ArrayList<String>();
 	private String apiKey = "zDGx49GoEN9QSojPIc6S";
 	private String domain = "https://my.spectate.com";
-	private Map<String, String> allCampaigns = new HashMap(); // id, name																// address
+	private Map<String, String> allCampaigns = new HashMap<String,String>(); // id, name																// address
 	private Map<String, Campaign> campaigns = new HashMap<String, Campaign>();
 	private Email outReachEmail = new Email();
 	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
@@ -172,9 +167,9 @@ public class SpectateTrigger implements PublishTrigger {
 	/*
 	 * Gather Page parameters
 	 */
-	public void getOutreachInfo(final String id, String path) throws Exception {
+	private void getOutreachInfo(final String id, String path) throws Exception {
         Read readPage = new Read();
-        readPage.setToRead(new Identifier()
+        Identifier identifier = new Identifier()
         {
             
             public EntityType getType()
@@ -186,13 +181,16 @@ public class SpectateTrigger implements PublishTrigger {
             {
                 return id;
             }
-        });
+        };
         
+        readPage.setToRead(identifier);
         readPage.setUsername(getUser());
         ReadOperationResult result = (ReadOperationResult) readPage.perform();
         Page page = (Page) result.getAsset();
         
         if (page != null) {
+            LOG.info("Page: " + page.getIdentifer() + " was successfully read from the API");
+            
             // return unless page has a DD called "Outreach"
             String ddPath = page.getDataDefinitionPath();
             if (ddPath == null || !ddPath.equals("Outreach"))
@@ -208,6 +206,8 @@ public class SpectateTrigger implements PublishTrigger {
                 LOG.info("This page is not set to send email on publish. Skipping rest of trigger.");
                 return;
             }
+
+            LOG.info("Page: " + page.getIdentifer() + " uses the Outreach data definition and is marked to send email on publish");
 
 			String title = page.getMetadata().getTitle();
 			String content = "";
@@ -228,43 +228,45 @@ public class SpectateTrigger implements PublishTrigger {
 
 				if (name.equals("abstract")) {
 					abstractContent = value;
+                    LOG.info("Set 'abstract' content to: " + value);
 				}
 				else if (name.equals("template")) {
 					template=value;
+                    LOG.info("Set 'template' content to: " + value);
 				}
 				else if (name.equals("fromEmail")) {
 					fromEmail=value;
+                    LOG.info("Set 'fromEmail' to: " + value);
 				}
 				else if (name.equals("content")) {
 					content = value;
+					LOG.info("Set 'content' to: " + value);
 				}
 				else if(name.equals("testers")){
 					testRecepients = value;
+					LOG.info("Set 'testRecipients' to: " + value);
 				}
 				// campaign
 				else if (name.equals("list")) {
 					for (String n : values) {
 						if (!n.isEmpty()) {
-							LOG.debug("Adding Campaign: " + n);
+							LOG.info("Adding Campaign: " + n);
 							campaignNames.add(n);
 						}
 					}
 				}
 			}
-
-            // get rendered page content
-            outReachEmail.setMainContent(getRenderedContent(page));
             outReachEmail.setName(title);
             outReachEmail.setSubject(title);
             outReachEmail.setTextBody(content);
             outReachEmail.setTestRecepients(testRecepients);
-            outReachEmail.setMainContent(content);
             outReachEmail.setMainContent(getRenderedContent(page));
             if (day != null)
             	outReachEmail.setScheduledAtDate(day);
             if (time != null)
             	outReachEmail.setScheduledAtTime(time);
-            //	outReachEmail.setCustomHTMLBody(getRenderedContent(page));
+            
+            LOG.debug("Skipping scheduled info for now. Always using 'send_now' option");
             outReachEmail.setStatus("send_now");
             // defaults
             outReachEmail.setFromType("generic");
@@ -281,13 +283,12 @@ public class SpectateTrigger implements PublishTrigger {
             //outReachEmail.setHTMLBody(null);
             outReachEmail.setHeader("");
             outReachEmail.setFooter(footer);
-            //outReachEmail.setFooter("<p>{{ spam_compliance_address }}</p><p>&nbsp;</p><p><span style=\"font-family: arial,helvetica,sans-serif; font-size: xx-small;\"><!--{{ unsubscribe_link }}</span>--></span></p>");
-            //outReachEmail.setFooter("{{ unsubscribe_link }}"); //KEEP
             outReachEmail.setCustomType("supplied");
-            //outReachEmail.setCustomEmailId(2333);
-			
-		}//read page
-		//return null
+        }
+        else
+        {
+            LOG.debug("Page with identifier: " + identifier +  " not read succesfully. Will skip rest of trigger.");
+        }
 	}
 
 	private String getParameter(JSONObject jsonObject, String parent, String child) {
@@ -307,6 +308,7 @@ public class SpectateTrigger implements PublishTrigger {
 
 	// Gets ALL campaigns
 	private String getCampaigns() throws IOException {
+        LOG.info("Retrieving campaigns from Spectate");
 		String reply = WebService.httpGet(getDomain()
 				+ "/marketing/campaigns.json?api_key=" + getApiKey()
 				+ "&per_page=1");
@@ -315,6 +317,8 @@ public class SpectateTrigger implements PublishTrigger {
 		reply = WebService.httpGet(getDomain()
 				+ "/marketing/campaigns.json?api_key=" + getApiKey()
 				+ "&per_page=" + total);
+		
+		LOG.info(total + " total campaign objects retrieved from Spectate");
 		return reply;
 	}
 
@@ -329,10 +333,6 @@ public class SpectateTrigger implements PublishTrigger {
 			String id = o.get("id").toString();
 			allCampaigns.put(name, id);
 		}
-	}
-
-	private void createEmail() throws UnsupportedEncodingException {
-		outReachEmail.generateJSON();
 	}
 
 	private void getSelectedCampaigns() throws IOException {
@@ -373,12 +373,6 @@ public class SpectateTrigger implements PublishTrigger {
 			}
 		}
 	}
-	private String getCampaignID(String name) throws JSONException, IOException {
-		String leadURL = getDomain() + "/marketing/campaigns?api_key="
-				+ getApiKey();
-		JSONObject campaigns = new JSONObject(this.getCampaigns());
-		return "";
-	}
 
 	private String getDomain() {
 		return this.domain;
@@ -388,6 +382,9 @@ public class SpectateTrigger implements PublishTrigger {
 		StringBuffer content = new StringBuffer();
 
 		String pageURLString = getWebUrl() +  path + "-spectate.html";
+		
+		LOG.debug("Read page's content at live url: " + pageURLString);
+		
 		URL pageURL = new URL(pageURLString);
         BufferedReader in = new BufferedReader(
         new InputStreamReader(pageURL.openStream()));
@@ -404,11 +401,11 @@ public class SpectateTrigger implements PublishTrigger {
 		//String jsonHead = StringEscapeUtils.escapeJson(head.html());
 		//String jsonBody = StringEscapeUtils.escapeJson(body.html());
 		//String jsonStyle = StringEscapeUtils.escapeJson(doc.select("style").first().html());
-		String fullContent = StringEscapeUtils.escapeJson(content.toString());
-		
-		String templateString = fullContent;
-		return templateString;
-		//return content.toString();
+        
+        LOG.info("Page content successfully read as: " + content);
+        String fullContent = StringEscapeUtils.escapeJson(content.toString());
+        LOG.info("Page content JSON-escaped as: " + fullContent);
+        return fullContent;
 	}
 
 	private JSONObject getLead(String id) throws IOException {

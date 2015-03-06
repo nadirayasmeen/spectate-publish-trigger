@@ -14,8 +14,12 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import org.apache.log4j.Logger;
+
 public class WebService {
 
+    private static final Logger LOG = Logger.getLogger(WebService.class);
+    
 	public static String httpGet(String urlStr) throws IOException {
 		URL url = new URL(urlStr);
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -68,9 +72,7 @@ public class WebService {
 						+ conn.getResponseCode() + " "
 						+ conn.getResponseMessage() + ": " + conn.getURL());
 
-			} 
-			
-	
+			}
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(
 					conn.getInputStream()));
@@ -78,10 +80,8 @@ public class WebService {
 			while (in.readLine() != null) {
 				response.append(in.readLine());
 			}
-			//System.out.println("\nREST Service Invoked Successfully.." 						+ conn.getResponseCode() + " "
-		//			+ conn.getResponseMessage() + ": " + conn.getURL() + conn.getRequestMethod());
-		//	System.out.println(response);
-			System.out.println("Email successfully created.");
+			
+			LOG.debug("Email successfully created.");
 			in.close();
 			conn.disconnect();
 		} catch (Exception e) {
