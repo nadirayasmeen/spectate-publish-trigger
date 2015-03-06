@@ -57,80 +57,74 @@ public class SpectateTrigger implements PublishTrigger {
 	private String user = "admin";
 	private String pass = "admin";
 	private String host = "";
-	private String siteId = "cde5bdfe94ba7976308d456098a63f49"; //access?? cde5bdfe94ba7976308d456098a63f49 - 
+	private String siteId = "cde5bdfe94ba7976308d456098a63f49";
 	private String siteName = "Outreach";
 	private String webUrl = "";
 	private List<String> campaignNames = new ArrayList<String>();
-	private String apiKey = "zDGx49GoEN9QSojPIc6S";
+	private String apiKey = null;
 	private String domain = "https://my.spectate.com";
 	private Map<String, String> allCampaigns = new HashMap<String,String>(); // id, name																// address
 	private Map<String, Campaign> campaigns = new HashMap<String, Campaign>();
 	private Email outReachEmail = new Email();
 	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.cms.publish.PublishTrigger#invoke()
-	 */
 	public void invoke() throws PublishTriggerException {
-		// this is where the logic for the trigger lives.
-		// we switch on the entity type and this allows us to determine if a
-		// page or file is being published
-		switch (information.getEntityType()) {
-		case PublishTriggerEntityTypes.TYPE_FILE:
-		//	System.out.println("Publishing file with path "
-			//		+ information.getEntityPath() + " and id "
-				//	+ information.getEntityId());
-			break;
-		case PublishTriggerEntityTypes.TYPE_PAGE:
-	
-		
-			
-			//only run on outreach pages
-			System.out.println("Publishing page with path "
-					+ information.getEntityPath() + " and id "
-					+ information.getEntityId());
-			
-			SpectateTrigger t = new SpectateTrigger();
-			if(this.parameters.get("apiKey").length() > 0){
-				t.setApiKey(this.parameters.get("apiKey"));
-			}
-			if(this.parameters.get("url").length() > 0){
-				t.setHost(this.parameters.get("url"));
-				t.setUrlString(this.parameters.get("url")+"/ws/services/AssetOperationService?wsdl");
-			}
-			if(this.parameters.get("webUrl").length() > 0){
-				t.setWebUrl(this.parameters.get("webUrl"));
-			}
-			if(this.parameters.get("user").length() > 0){
-				t.setWebUrl(this.parameters.get("user"));
-			}
-			if(this.parameters.get("pass").length() > 0){
-				t.setWebUrl(this.parameters.get("pass"));
-			}
-			try {
-				System.out.println("Creating Spectate Data...");
-				t.getOutreachInfo(information.getEntityId(),
-						information.getEntityPath());
-			} catch (Exception e) {
-			    LOG.info("Error occurred when gathering data to send to Spectate", e);
-			}
-			if (!t.outReachEmail.getName().equals("")) {
-			
-				try {
-					// populate campaigns
-					t.getSelectedCampaigns();
-					// send email
-					t.outReachEmail.sendEmail(t.getDomain()
-							+ "/marketing/emails?api_key=" + t.getApiKey());
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			break;
+        try {
+        // this is where the logic for the trigger lives.
+        // we switch on the entity type and this allows us to determine if a
+        // page or file is being published
+        switch (information.getEntityType()) {
+        case PublishTriggerEntityTypes.TYPE_FILE:
+            LOG.info("File publish. Skipping trigger.");
+            break;
+        case PublishTriggerEntityTypes.TYPE_PAGE:
+            LOG.info("Publishing page with path " + information.getEntityPath() + " and id " + information.getEntityId());
+
+            SpectateTrigger t = new SpectateTrigger();
+
+            String apiKey = this.parameters.get("apiKey");
+            if (apiKey == null || apiKey.equals(""))
+            {
+                LOG.info("No apiKey present. Skipping rest of trigger.");
+                return;
+            }
+            t.setApiKey(apiKey);
+
+            String url = this.parameters.get("url"); 
+            if (url != null && !url.equals(""))
+            {
+                t.setHost(url);
+                t.setUrlString(url + "/ws/services/AssetOperationService?wsdl");
+            }
+            
+            String webUrl = this.parameters.get("webUrl");
+            if (webUrl != null && webUrl.length() > 0)
+                t.setWebUrl(webUrl);
+
+            String user = this.parameters.get("user");
+            if (user != null && user.length() > 0)
+                t.setUser(user);
+
+            try {
+                LOG.info("Start creating Spectate Data if necessary...");
+                t.getOutreachInfo(information.getEntityId(), information.getEntityPath());
+            } catch (Exception e) {
+                LOG.info("Error occurred when gathering data to send to Spectate", e);
+            }
+            if (!t.outReachEmail.getName().equals("")) {
+                // populate campaigns
+                t.getSelectedCampaigns();
+                // send email
+                t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails?api_key=" + t.getApiKey());
+                
+            }
+            break;
 		}
+        }
+        catch (Exception e)
+        {
+            LOG.error("Something went wrong", e);
+        }
 	}
 
 	public void getDestinationInfo(String id, String path)	{
@@ -273,7 +267,7 @@ public class SpectateTrigger implements PublishTrigger {
             	outReachEmail.setScheduledAtTime(time);
             
             LOG.debug("Skipping scheduled info for now. Always using 'send_now' option");
-            outReachEmail.setStatus("send_now");
+            outReachEmail.setStatus("draft");
             // defaults
             outReachEmail.setFromType("generic");
             outReachEmail.setFromName("Washoe County");
@@ -582,6 +576,4 @@ public class SpectateTrigger implements PublishTrigger {
 	
 		*/
 	}
-	
-	
 }
