@@ -87,25 +87,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>axistools-maven-plugin</artifactId>
-                <version>1.4</version>
-                <configuration>
-                    <sourceDirectory>src/java/wsdl</sourceDirectory>
-                    <wsdlFiles>
-                        <wsdlFile>asset-operation.wsdl</wsdlFile>
-                    </wsdlFiles>
-                    <subPackageByFileName>false</subPackageByFileName>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>wsdl2java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.2</version>

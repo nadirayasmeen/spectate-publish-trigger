@@ -7,16 +7,12 @@ package com.hannonhill.emailtrigger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.rpc.ServiceException;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
@@ -38,12 +34,6 @@ import com.hannonhill.cascade.api.operation.Read;
 import com.hannonhill.cascade.api.operation.result.ReadOperationResult;
 import com.hannonhill.cascade.model.dom.identifier.EntityType;
 import com.hannonhill.cascade.model.dom.identifier.EntityTypes;
-import com.hannonhill.www.ws.ns.AssetOperationService.AssetOperationHandler;
-import com.hannonhill.www.ws.ns.AssetOperationService.AssetOperationHandlerServiceLocator;
-import com.hannonhill.www.ws.ns.AssetOperationService.Authentication;
-import com.hannonhill.www.ws.ns.AssetOperationService.EntityTypeString;
-import com.hannonhill.www.ws.ns.AssetOperationService.Path;
-import com.hannonhill.www.ws.ns.AssetOperationService.ReadResult;
 
 /**
  * Creates a Spectate Email from a Page in Cascade Server
@@ -127,43 +117,6 @@ public class SpectateTrigger implements PublishTrigger {
         }
 	}
 
-	public void getDestinationInfo(String id, String path)	{
-		Path p = new Path(path, getSiteId(), getSiteName());
-		p.setPath(path);
-		p.setSiteName(getSiteName());
-		com.hannonhill.www.ws.ns.AssetOperationService.Identifier identifier = new com.hannonhill.www.ws.ns.AssetOperationService.Identifier(id, p, EntityTypeString.destination,
-				false);
-	
-		URL url = null;
-		try {
-			url = new URL(getUrlString());
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		Authentication auth = new Authentication();
-		ReadResult result = new ReadResult();
-		auth.setUsername(getUser());
-		auth.setPassword(getPass());
-		AssetOperationHandler handler;
-		try {
-			handler = new AssetOperationHandlerServiceLocator()
-					.getAssetOperationService(url);
-			result = handler.read(auth, identifier);
-		} catch (ServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if (result.getSuccess().equals("true")) {
-			com.hannonhill.www.ws.ns.AssetOperationService.Destination dest = result
-					.getAsset().getDestination();
-			System.out.println("Setting Web URL to : " + dest.getWebUrl());
-			setWebUrl(dest.getWebUrl());
-		}
-	}
 	/*
 	 * Gather Page parameters
 	 */
@@ -541,13 +494,6 @@ public class SpectateTrigger implements PublishTrigger {
 		this.host = host;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.cms.publish.PublishTrigger#setPublishInformation(com.cms.publish.
-	 * PublishTriggerInformation)
-	 */
 	public void setPublishInformation(PublishTriggerInformation information) {
 		// store this in an instance member so invoke() has access to it
 		this.information = information;
