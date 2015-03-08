@@ -594,58 +594,7 @@ public class Email {
 	public String getMainContent() {
 		return main_content;
 	}
-	
-	public static String cleanData(String input) throws UnsupportedEncodingException{
-		   Tidy tidy = new Tidy();
-		    tidy.setInputEncoding("UTF-8");
-		    tidy.setOutputEncoding("UTF-8");
-		    tidy.setPrintBodyOnly(true); // only print the content
-		    tidy.setXmlOut(true); // to XML
-		    tidy.setSmartIndent(true); 
-		    ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes("UTF-8"));
-		    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		    tidy.parseDOM(inputStream, outputStream);
-		    return outputStream.toString("UTF-8");
-	}
-	  public static String convertAsciiToXml(String string) {
-	        if (string == null || string.equals(""))
-	            return "";
 
-	        StringBuffer sbuf = new StringBuffer();
-	        char ch[] = string.toCharArray();
-	        for (int i = 0; i < ch.length; i++) {
-	            switch (ch[i]) {
-	                case '&':
-	                    sbuf.append("&amp;");
-	                    break;
-	                case '<':
-	                    sbuf.append("&lt;");
-	                    break;
-	                case '>':
-	                    sbuf.append("&gt;");
-	                    break;
-	                case '\"':
-	                    sbuf.append("&quot;");
-	                    break;
-	                default:
-	                    if (ch[i] > '\u007f') {
-	                        sbuf.append("&#");
-	                        sbuf.append(Integer.toString(ch[i]));
-	                        sbuf.append(';');
-	                    }
-	                    else if (ch[i] == '\t') {
-	                        sbuf.append(' ');
-	                        sbuf.append(' ');
-	                        sbuf.append(' ');
-	                        sbuf.append(' ');
-	                    }
-	                    else if ((int) ch[i] >= 32 || (ch[i] == '\n' || ch[i] == '\r')) {
-	                        sbuf.append(ch[i]);
-	                    }
-	            }
-	        }
-	        return sbuf.toString();
-	    }
 	/**
 	 * @param main_content the main_content to set
 	 */

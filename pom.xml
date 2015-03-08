@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>Cascade-Java-Web-Services-Example-Project</groupId>
-    <artifactId>Cascade-Java-Web-Services-Example-Project</artifactId>
-    <version>6.8.3</version>
+    <groupId>com.hannonhill</groupId>
+    <artifactId>spectate-email-publish-trigger</artifactId>
+    <version>1.0</version>
 
     <dependencies>
         <dependency>
@@ -48,27 +48,40 @@
         	<artifactId>commons-lang3</artifactId>
         	<version>3.3.2</version>
         </dependency>
+        <dependency>
+          <groupId>com.hannonhill</groupId>
+          <artifactId>publish-trigger</artifactId>
+          <version>7.12</version>
+          <scope>system</scope>
+          <systemPath>${basedir}/publishtrigger-7.12.jar</systemPath>
+        </dependency>
+        <dependency>
+          <groupId>com.hannonhill</groupId>
+          <artifactId>cascade-api</artifactId>
+          <version>7.12</version>
+          <scope>system</scope>
+          <systemPath>${basedir}/cascade-api-7.12.jar</systemPath>
+        </dependency>
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>1.2.14</version>
+        </dependency>
     </dependencies>
 
     <build>
         <sourceDirectory>${basedir}/src/java</sourceDirectory>
-        <testSourceDirectory>${basedir}/src/java</testSourceDirectory>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>axistools-maven-plugin</artifactId>
-                <version>1.4</version>
-                <configuration>
-                    <sourceDirectory>src/java/wsdl</sourceDirectory>
-                    <wsdlFiles>
-                        <wsdlFile>asset-operation.wsdl</wsdlFile>
-                    </wsdlFiles>
-                    <subPackageByFileName>false</subPackageByFileName>
-                </configuration>
+                <groupId>org.zeroturnaround</groupId>
+                <artifactId>jrebel-maven-plugin</artifactId>
+                <version>1.1.5</version>
                 <executions>
                     <execution>
+                        <id>generate-rebel-xml</id>
+                        <phase>process-resources</phase>
                         <goals>
-                            <goal>wsdl2java</goal>
+                             <goal>generate</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -76,10 +89,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
+                <version>3.2</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
         </plugins>
