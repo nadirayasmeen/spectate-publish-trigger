@@ -29,10 +29,15 @@ import com.cms.publish.PublishTrigger;
 import com.cms.publish.PublishTriggerEntityTypes;
 import com.cms.publish.PublishTriggerException;
 import com.cms.publish.PublishTriggerInformation;
+import com.hannonhill.cascade.api.asset.common.BaseAsset;
 import com.hannonhill.cascade.api.asset.common.Identifier;
 import com.hannonhill.cascade.api.asset.common.StructuredDataNode;
 import com.hannonhill.cascade.api.asset.home.Page;
+import com.hannonhill.cascade.api.operation.Edit;
 import com.hannonhill.cascade.api.operation.Read;
+import com.hannonhill.cascade.api.operation.exception.ModelOperationException;
+import com.hannonhill.cascade.api.operation.exception.OperationValidationException;
+import com.hannonhill.cascade.api.operation.result.EditOperationResult;
 import com.hannonhill.cascade.api.operation.result.ReadOperationResult;
 import com.hannonhill.cascade.model.dom.identifier.EntityType;
 import com.hannonhill.cascade.model.dom.identifier.EntityTypes;
@@ -58,7 +63,6 @@ public class SpectateTrigger implements PublishTrigger {
 	private Map<String, String> allCampaigns = new HashMap<String,String>(); // id, name																// address
 	private Map<String, Campaign> campaigns = new HashMap<String, Campaign>();
 	private Email outReachEmail = new Email();
-	private Page outReachPage = null; //Store the page so it only needs to be read one time
 	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
 	private Page pageAPIObject = null;
 
@@ -115,10 +119,10 @@ public class SpectateTrigger implements PublishTrigger {
                 // send email
                 int statusCode = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails?api_key=" + t.getApiKey());
                 //Check what response contains
-                LOG.info("Response contains: " + statusCode);
+                LOG.info("Status Code: " + statusCode);
                 if(statusCode == 200){
                 	//set the field in Cascade
-                	
+                	updateSentStatus(information.getEntityId(), information.getEntityPath());
                 }
                 
             }
@@ -130,7 +134,47 @@ public class SpectateTrigger implements PublishTrigger {
             LOG.error("Something went wrong. Logging error and continuing", e);
         }
 	}
-
+/*
+ * Update Email Sent field on an Outreach Page
+ * 
+ */
+	private void updateSentStatus(final String id, String path) throws ModelOperationException, OperationValidationException{
+		LOG.info("Setting Email Send status to : Sent");
+		//Another page read?
+	       Read readPage = new Read();
+	        Identifier identifier = new Identifier()
+	        {
+	            
+	            public EntityType getType()
+	            {
+	                return EntityTypes.TYPE_PAGE;
+	            }
+	            
+	            public String getId()
+	            {
+	                return id;
+	            }
+	        };
+	        
+	        readPage.setToRead(identifier);
+	        readPage.setUsername(getUser());
+	        ReadOperationResult result = (ReadOperationResult) readPage.perform();
+	        Page page = (Page) result.getAsset();
+		//Using page variable
+	    // Page page = getOutReachPage();
+		
+		if(page == null){
+			LOG.info("Page Asset is Empty. Exiting.");
+			return;
+		}
+		LOG.info("Setting send node to sent.");
+		page.getStructuredDataNode("send").setTextValue("sent");		
+		Edit editPage = new Edit();       
+        editPage.setUsername(getUser());
+        editPage.setAsset((BaseAsset)page);
+	    EditOperationResult editResult = (EditOperationResult) editPage.perform();
+		LOG.debug("Page Edited?");
+	}
 	/*
 	 * Gather Page parameters
 	 */
@@ -202,6 +246,7 @@ public class SpectateTrigger implements PublishTrigger {
             LOG.info("Page: " + pageAPIObject.getIdentifer().getId() + " uses the Outreach data definition and is marked to send email on publish");
 
 			String title = pageAPIObject.getMetadata().getTitle();
+
 
 			String content = "";
 			String template = "";
@@ -550,6 +595,7 @@ public class SpectateTrigger implements PublishTrigger {
 	public void setHost(String host) {
 		this.host = host;
 	}
+
 
 	public void setPublishInformation(PublishTriggerInformation information) {
 		// store this in an instance member so invoke() has access to it
