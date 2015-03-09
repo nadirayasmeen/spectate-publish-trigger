@@ -241,8 +241,6 @@ if(!spectateConfiguration(information)){
             	outReachEmail.setScheduledAtDate(day);
             if (time != null)
             	outReachEmail.setScheduledAtTime(time);
-            
-            LOG.debug("Skipping scheduled info for now. Always using 'send_now' option");
             outReachEmail.setStatus(status);
             // defaults
             outReachEmail.setFromType("generic");

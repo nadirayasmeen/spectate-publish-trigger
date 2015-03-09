@@ -43,7 +43,7 @@ public class WebService {
 	}
 	public static String httpPost(String urlStr, String parameters)
 			throws Exception {
-
+		LOG.debug("Creating POST Request for Spectate");
 		StringBuffer response = new StringBuffer();
 		try {
 		URL url = new URL(urlStr);
