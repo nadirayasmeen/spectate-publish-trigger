@@ -30,7 +30,6 @@ import com.cms.publish.PublishTriggerEntityTypes;
 import com.cms.publish.PublishTriggerException;
 import com.cms.publish.PublishTriggerInformation;
 import com.hannonhill.cascade.api.asset.common.Identifier;
-import com.hannonhill.cascade.api.asset.common.PageConfiguration;
 import com.hannonhill.cascade.api.asset.common.StructuredDataNode;
 import com.hannonhill.cascade.api.asset.home.Page;
 import com.hannonhill.cascade.api.operation.Read;
@@ -60,6 +59,7 @@ public class SpectateTrigger implements PublishTrigger {
 	private Map<String, Campaign> campaigns = new HashMap<String, Campaign>();
 	private Email outReachEmail = new Email();
 	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
+	private Page pageAPIObject = null;
 
 	public void invoke() throws PublishTriggerException {
         try {
@@ -73,7 +73,7 @@ public class SpectateTrigger implements PublishTrigger {
         case PublishTriggerEntityTypes.TYPE_PAGE:
             LOG.info("Publishing page with path " + information.getEntityPath() + " and id " + information.getEntityId());
             
-            if(!publishingSpectateConfiguration(information, parameters)){
+            if(!publishingSpectateConfiguration(information, parameters)) {
                 LOG.debug("Not publishing a Spectate page configuration. Skipping rest of trigger");
                 return;
             }
@@ -92,7 +92,6 @@ public class SpectateTrigger implements PublishTrigger {
             if (url != null && !url.equals(""))
             {
                 t.setHost(url);
-                t.setUrlString(url + "/ws/services/AssetOperationService?wsdl");
             }
             
             String webUrl = this.parameters.get("webUrl");
@@ -121,7 +120,7 @@ public class SpectateTrigger implements PublishTrigger {
         }
         catch (Exception e)
         {
-            LOG.error("Something went wrong", e);
+            LOG.error("Something went wrong. Logging error and continuing", e);
         }
 	}
 
@@ -147,13 +146,13 @@ public class SpectateTrigger implements PublishTrigger {
         readPage.setToRead(identifier);
         readPage.setUsername(getUser());
         ReadOperationResult result = (ReadOperationResult) readPage.perform();
-        Page page = (Page) result.getAsset();
+        pageAPIObject = (Page) result.getAsset();
         
-        if (page != null) {
-            LOG.info("Page: " + page.getIdentifer() + " was successfully read from the API");
+        if (pageAPIObject != null) {
+            LOG.info("Page: " + pageAPIObject.getIdentifer().getId() + " was successfully read from the API");
             
             // return unless page has a DD called "Outreach"
-            String ddPath = page.getDataDefinitionPath();
+            String ddPath = pageAPIObject.getDataDefinitionPath();
             if (ddPath == null || !ddPath.equals("Outreach"))
             {
                 LOG.info("Page's DD is: " + ddPath + ". Skipping rest of trigger.");
@@ -161,24 +160,48 @@ public class SpectateTrigger implements PublishTrigger {
             }
             
             // return unless email field is set to "Yes"
-            StructuredDataNode email = page.getStructuredDataNode("email");
+            StructuredDataNode email = pageAPIObject.getStructuredDataNode("email");
             if (email == null || !Arrays.asList(email.getTextValues()).contains("Yes"))
             {
                 LOG.info("This page is not set to send email on publish. Skipping rest of trigger.");
                 return;
             }
+            
+            // check send status
+            StructuredDataNode sendStatus = pageAPIObject.getStructuredDataNode("send");
+            String status = "draft";
+            String sendStatusTextValue = sendStatus.getTextValue();
+            if ("Sent to Spectate already".equals(sendStatusTextValue))
+            {
+                LOG.info("Email for page: " + pageAPIObject.getIdentifer().getId() + " has already been sent to Spectate. Skipping rest of trigger to avoid duplicate email");
+                return;
+            }
+            else if(status.equals("Later"))
+            {
+                LOG.info("Setting email status to 'send_later'");
+                status = "send_later";
+            }
+            else if ("Now".equals(sendStatusTextValue))
+            {
+                LOG.info("Setting email status to 'send_now'");
+                status = "send_now";
+            }
+            else 
+            {
+                LOG.info("Setting email status to 'draft'");
+                status = "draft";
+            }
 
-            LOG.info("Page: " + page.getIdentifer() + " uses the Outreach data definition and is marked to send email on publish");
+            LOG.info("Page: " + pageAPIObject.getIdentifer().getId() + " uses the Outreach data definition and is marked to send email on publish");
 
-			String title = page.getMetadata().getTitle();
+			String title = pageAPIObject.getMetadata().getTitle();
 			String content = "";
 			String template = "";
 			String fromEmail = "";
 			String testRecepients = "";
 			String abstractContent = "";
 			String footer = StringEscapeUtils.escapeJson("<em>Copyright &#169; 2015 Washoe County, All rights reserved.</em>\n    <br />\n\t\t{{ unsubscribe_link }}\n\t\t<br />\n\t\t<strong>Our mailing address is:</strong>\n\t\t<br />\n\t\t{{ spam_compliance_address }}\n");
-			StructuredDataNode[] nodes = page.getStructuredData();
-			String status = "draft"; //Default
+			StructuredDataNode[] nodes = pageAPIObject.getStructuredData();
 			String day = null;
 			String time = null;
 			
@@ -203,15 +226,6 @@ public class SpectateTrigger implements PublishTrigger {
 				else if (name.equals("content")) {
 					content = value;
 					LOG.info("Set 'content' to: " + value);
-				}
-				if (name.equals("send")) {
-					if(status.equals("Now"))
-						status = "send_now";
-					else if(status.equals("Later"))
-						status = "send_later";
-					else
-						status = "draft";
-                    LOG.info("Set 'send status' to: " + value);
 				}
 				else if (name.equals("schedule") && value != null) { // Date
 					day = new SimpleDateFormat("yyyy-MM-dd").format(Long.parseLong(value));
@@ -239,6 +253,7 @@ public class SpectateTrigger implements PublishTrigger {
             outReachEmail.setTextBody(content);
             outReachEmail.setTestRecepients(testRecepients);
             outReachEmail.setMainContent(content);
+
             if (day != null)
             	outReachEmail.setScheduledAtDate(day);
             if (time != null)
@@ -255,7 +270,7 @@ public class SpectateTrigger implements PublishTrigger {
             outReachEmail.setBodyType("html_only");
             //	outReachEmail.setBodyType("text_only");
             outReachEmail.setLayoutType("custom");
-            outReachEmail.setCustomHTMLBody(getRenderedContent(page));
+            outReachEmail.setCustomHTMLBody(getRenderedContent(pageAPIObject));
             //outReachEmail.setHTMLBody(null);
             outReachEmail.setHeader("");
             outReachEmail.setFooter(footer);
