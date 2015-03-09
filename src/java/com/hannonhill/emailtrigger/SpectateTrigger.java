@@ -117,10 +117,10 @@ public class SpectateTrigger implements PublishTrigger {
                 // populate campaigns
                 t.getSelectedCampaigns();
                 // send email
-                int statusCode = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails?api_key=" + t.getApiKey());
+                int statusCode = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails.json?api_key=" + t.getApiKey());
                 //Check what response contains
                 LOG.info("Status Code: " + statusCode);
-                if(statusCode == 200){
+                if(statusCode == 201){
                 	//set the field in Cascade
                 	updateSentStatus(information.getEntityId(), information.getEntityPath());
                 }
@@ -228,7 +228,7 @@ public class SpectateTrigger implements PublishTrigger {
                 LOG.info("Email for page: " + pageAPIObject.getIdentifer().getId() + " has already been sent to Spectate. Skipping rest of trigger to avoid duplicate email");
                 return;
             }
-            else if(status.equals("Later"))
+            else if("Later".equals(sendStatusTextValue))
             {
                 LOG.info("Setting email status to 'send_later'");
                 status = "send_later";
@@ -307,10 +307,13 @@ public class SpectateTrigger implements PublishTrigger {
             outReachEmail.setTestRecepients(testRecepients);
             outReachEmail.setMainContent(content);
 
+            //if scheduled date has been set but status = now or draft, scheduled date/time needs to be overridden
+            if("send_later".equals(status)){
             if (day != null)
             	outReachEmail.setScheduledAtDate(day);
             if (time != null)
             	outReachEmail.setScheduledAtTime(time);
+            }
             outReachEmail.setStatus(status);
             // defaults
             outReachEmail.setFromType("generic");
