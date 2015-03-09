@@ -58,6 +58,7 @@ public class SpectateTrigger implements PublishTrigger {
 	private Map<String, String> allCampaigns = new HashMap<String,String>(); // id, name																// address
 	private Map<String, Campaign> campaigns = new HashMap<String, Campaign>();
 	private Email outReachEmail = new Email();
+	private Page outReachPage = null; //Store the page so it only needs to be read one time
 	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
 	private Page pageAPIObject = null;
 
@@ -112,7 +113,13 @@ public class SpectateTrigger implements PublishTrigger {
                 // populate campaigns
                 t.getSelectedCampaigns();
                 // send email
-                t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails?api_key=" + t.getApiKey());
+                int statusCode = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails?api_key=" + t.getApiKey());
+                //Check what response contains
+                LOG.info("Response contains: " + statusCode);
+                if(statusCode == 200){
+                	//set the field in Cascade
+                	
+                }
                 
             }
             break;
@@ -151,6 +158,7 @@ public class SpectateTrigger implements PublishTrigger {
         if (pageAPIObject != null) {
             LOG.info("Page: " + pageAPIObject.getIdentifer().getId() + " was successfully read from the API");
             
+
             // return unless page has a DD called "Outreach"
             String ddPath = pageAPIObject.getDataDefinitionPath();
             if (ddPath == null || !ddPath.equals("Outreach"))
@@ -191,10 +199,10 @@ public class SpectateTrigger implements PublishTrigger {
                 LOG.info("Setting email status to 'draft'");
                 status = "draft";
             }
-
             LOG.info("Page: " + pageAPIObject.getIdentifer().getId() + " uses the Outreach data definition and is marked to send email on publish");
 
 			String title = pageAPIObject.getMetadata().getTitle();
+
 			String content = "";
 			String template = "";
 			String fromEmail = "";

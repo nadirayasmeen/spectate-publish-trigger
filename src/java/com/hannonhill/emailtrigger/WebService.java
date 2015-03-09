@@ -41,10 +41,11 @@ public class WebService {
 		conn.disconnect();
 		return sb.toString();
 	}
-	public static String httpPost(String urlStr, String parameters)
+	public static int httpPost(String urlStr, String parameters)
 			throws Exception {
 		LOG.debug("Creating POST Request for Spectate");
-		StringBuffer response = new StringBuffer();
+		//StringBuffer response = new StringBuffer();
+		int response = -1;
 		try {
 		URL url = new URL(urlStr);
 			HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
@@ -77,16 +78,16 @@ public class WebService {
 			BufferedReader in = new BufferedReader(new InputStreamReader(
 					conn.getInputStream()));
 
-			while (in.readLine() != null) {
+		/*	while (in.readLine() != null) {
 				response.append(in.readLine());
-			}
-			
+			}*/
+			response = conn.getResponseCode();
 			LOG.debug("Email successfully created.");
 			in.close();
 			conn.disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return response.toString();
+		return response;
 	}
 }

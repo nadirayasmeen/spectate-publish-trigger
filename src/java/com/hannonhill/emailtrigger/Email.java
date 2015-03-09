@@ -263,10 +263,10 @@ public class Email {
 		return params;
 		
 	}
-	public void sendEmail(String url) throws Exception{
+	public int sendEmail(String url) throws Exception{
 		LOG.debug("Gathering data to send email.");
 		String json = this.generateJSON();
-		WebService.httpPost(url, json);
+		return WebService.httpPost(url, json);
 	}
 	public String getJSONPair(String key, String val){
 		if(!val.isEmpty() || val != null){
