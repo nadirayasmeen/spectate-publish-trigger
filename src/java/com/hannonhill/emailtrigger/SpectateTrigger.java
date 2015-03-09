@@ -28,6 +28,7 @@ import com.cms.publish.PublishTriggerEntityTypes;
 import com.cms.publish.PublishTriggerException;
 import com.cms.publish.PublishTriggerInformation;
 import com.hannonhill.cascade.api.asset.common.Identifier;
+import com.hannonhill.cascade.api.asset.common.PageConfiguration;
 import com.hannonhill.cascade.api.asset.common.StructuredDataNode;
 import com.hannonhill.cascade.api.asset.home.Page;
 import com.hannonhill.cascade.api.operation.Read;
@@ -69,7 +70,10 @@ public class SpectateTrigger implements PublishTrigger {
             break;
         case PublishTriggerEntityTypes.TYPE_PAGE:
             LOG.info("Publishing page with path " + information.getEntityPath() + " and id " + information.getEntityId());
-
+if(!spectateConfiguration(information)){
+	LOG.debug("Page does not contain a Spectate output. Exiting");
+	return;
+}
             SpectateTrigger t = new SpectateTrigger();
 
             String apiKey = this.parameters.get("apiKey");
@@ -170,6 +174,7 @@ public class SpectateTrigger implements PublishTrigger {
 			String abstractContent = "";
 			String footer = StringEscapeUtils.escapeJson("<em>Copyright &#169; 2015 Washoe County, All rights reserved.</em>\n    <br />\n\t\t{{ unsubscribe_link }}\n\t\t<br />\n\t\t<strong>Our mailing address is:</strong>\n\t\t<br />\n\t\t{{ spam_compliance_address }}\n");
 			StructuredDataNode[] nodes = page.getStructuredData();
+			String status = "draft";
 			String day = null;
 			String time = null;
 			
@@ -194,6 +199,13 @@ public class SpectateTrigger implements PublishTrigger {
 				else if (name.equals("content")) {
 					content = value;
 					LOG.info("Set 'content' to: " + value);
+				}
+				if (name.equals("send")) {
+					if(status.equals("Now"))
+						status = "send_now";
+					else
+						status = "draft";
+                    LOG.info("Set 'abstract' content to: " + value);
 				}
 				else if(name.equals("testers")){
 					testRecepients = value;
@@ -220,7 +232,7 @@ public class SpectateTrigger implements PublishTrigger {
             	outReachEmail.setScheduledAtTime(time);
             
             LOG.debug("Skipping scheduled info for now. Always using 'send_now' option");
-            outReachEmail.setStatus("draft");
+            outReachEmail.setStatus(status);
             // defaults
             outReachEmail.setFromType("generic");
             outReachEmail.setFromName("Washoe County");
@@ -250,7 +262,27 @@ public class SpectateTrigger implements PublishTrigger {
 
         return jsonObject.getJSONObject(parent).get(child).toString();
 	}
+	private boolean spectateConfiguration(
+			final PublishTriggerInformation information) throws Exception {
+		Read readConfig = new Read();
+		readConfig.setToRead(new Identifier() {
+			public EntityType getType() {
+				return EntityTypes.TYPE_PAGECONFIGURATION;
+			}
 
+			public String getId() {
+				return information.getPageConfigurationId();
+			}
+		});
+
+		readConfig.setUsername(getUser());
+		ReadOperationResult result;
+		result = (ReadOperationResult) readConfig.perform();
+		PageConfiguration config = (PageConfiguration) result.getAsset();
+		if (config.getName().equals("Spectate"))
+			return true;
+		return false;
+	}
 	private void setApiKey(String apiKey) {
 		this.apiKey = apiKey;
 	}
