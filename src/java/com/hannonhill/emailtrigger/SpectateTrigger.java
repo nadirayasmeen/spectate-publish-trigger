@@ -70,10 +70,12 @@ public class SpectateTrigger implements PublishTrigger {
             break;
         case PublishTriggerEntityTypes.TYPE_PAGE:
             LOG.info("Publishing page with path " + information.getEntityPath() + " and id " + information.getEntityId());
-if(!spectateConfiguration(information)){
-	LOG.debug("Page does not contain a Spectate output. Exiting");
-	return;
-}
+            
+            if(!publishingSpectateConfiguration(information, parameters)){
+                LOG.debug("Not publishing a Spectate page configuration. Skipping rest of trigger");
+                return;
+            }
+            
             SpectateTrigger t = new SpectateTrigger();
 
             String apiKey = this.parameters.get("apiKey");
@@ -262,27 +264,18 @@ if(!spectateConfiguration(information)){
 
         return jsonObject.getJSONObject(parent).get(child).toString();
 	}
-	private boolean spectateConfiguration(
-			final PublishTriggerInformation information) throws Exception {
-		Read readConfig = new Read();
-		readConfig.setToRead(new Identifier() {
-			public EntityType getType() {
-				return EntityTypes.TYPE_PAGECONFIGURATION;
-			}
-
-			public String getId() {
-				return information.getPageConfigurationId();
-			}
-		});
-
-		readConfig.setUsername(getUser());
-		ReadOperationResult result;
-		result = (ReadOperationResult) readConfig.perform();
-		PageConfiguration config = (PageConfiguration) result.getAsset();
-		if (config.getName().equals("Spectate"))
-			return true;
-		return false;
-	}
+    /**
+     * @param information
+     * @param parameters
+     * @return Returns <tt>true</tt> if it is a Spectate page configuration and a publish request, else <tt>false</tt>. 
+     *         All other page configurations should be skipped
+     * @throws Exception
+     */
+    private boolean publishingSpectateConfiguration(PublishTriggerInformation information, Map<String,String> parameters) throws Exception {
+        String pageConfigurationId = parameters.get("pageConfigurationId");
+        return information.getPageConfigurationId().equals(pageConfigurationId) && !information.isUnpublish();
+    }
+    
 	private void setApiKey(String apiKey) {
 		this.apiKey = apiKey;
 	}
