@@ -8,8 +8,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,7 +176,7 @@ if(!spectateConfiguration(information)){
 			String abstractContent = "";
 			String footer = StringEscapeUtils.escapeJson("<em>Copyright &#169; 2015 Washoe County, All rights reserved.</em>\n    <br />\n\t\t{{ unsubscribe_link }}\n\t\t<br />\n\t\t<strong>Our mailing address is:</strong>\n\t\t<br />\n\t\t{{ spam_compliance_address }}\n");
 			StructuredDataNode[] nodes = page.getStructuredData();
-			String status = "draft";
+			String status = "draft"; //Default
 			String day = null;
 			String time = null;
 			
@@ -203,9 +205,18 @@ if(!spectateConfiguration(information)){
 				if (name.equals("send")) {
 					if(status.equals("Now"))
 						status = "send_now";
+					else if(status.equals("Later"))
+						status = "send_later";
 					else
 						status = "draft";
-                    LOG.info("Set 'abstract' content to: " + value);
+                    LOG.info("Set 'send status' to: " + value);
+				}
+				else if (name.equals("schedule") && value != null) { // Date
+					day = new SimpleDateFormat("yyyy-MM-dd").format(Long.parseLong(value));
+					LOG.info("Set 'Scheduled Day' to: " + day);
+					time = new SimpleDateFormat("h:mm a").format(Long.parseLong(value));
+					LOG.info("Set 'Scheduled Time' to: " + time);
+						
 				}
 				else if(name.equals("testers")){
 					testRecepients = value;
@@ -225,7 +236,7 @@ if(!spectateConfiguration(information)){
             outReachEmail.setSubject(title);
             outReachEmail.setTextBody(content);
             outReachEmail.setTestRecepients(testRecepients);
-            outReachEmail.setMainContent(getRenderedContent(page));
+            outReachEmail.setMainContent(content);
             if (day != null)
             	outReachEmail.setScheduledAtDate(day);
             if (time != null)
@@ -331,7 +342,7 @@ if(!spectateConfiguration(information)){
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+			LOG.debug("Retrieving campaign ID(s) for selected campaign(s) Name.");
 		for (String name : campaignNames) {
 			String id = allCampaigns.get(name);
 
@@ -351,7 +362,7 @@ if(!spectateConfiguration(information)){
 						emailAddresses.add(getLeadEmail(l));
 					}
 				}
-
+				LOG.debug("Adding selected ID to list of campaign IDs.");
 				// campaign exists add to selected campaigns
 				outReachEmail.getCampaignIds().add(Integer.parseInt(id));
 				campaigns.put(id, new Campaign(id, name, emailAddresses));

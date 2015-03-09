@@ -11,6 +11,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import org.w3c.tidy.*;
+import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 
 public class Email {
@@ -41,6 +42,7 @@ public class Email {
 	private boolean fullEmail = true;
 	private String template = "";
 	private String headContent = "";
+	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
 	
 	
 	public Email(){
@@ -208,6 +210,7 @@ public class Email {
 		return scheduled_at_time;
 	}
 	public String generateJSON() throws UnsupportedEncodingException{
+		LOG.debug("Creating JSON Request for Spectate");
 		//for each non-empty parameter create key/value pair
 		StringBuffer jsonString = new StringBuffer();
 		//String status = "draft";
@@ -252,17 +255,17 @@ public class Email {
 		 		",\"polished_html_body\":null" +
 		 		",\"polished_text_body\":null" +
 		 		 ",\"test_emails\":\""+getTestReceipients()+"\"" + //comma separated listed of emails
-		 		//",\"scheduled_at_date\":\""+getScheduledAtDate()+" \"" + //scheduled at date date/time yyyy-mm-dd
-		 		//",\"scheduled_at_time\":\""+getScheduledAtTime()+" \"" + //scheduled at date date/time 12:00 AM
-		 	",\"status\":\""+getStatus()+"\"" + //STATUS: draft, test, send_now, send_later, personal Send Later, Send Now, Save as Draft			 				 					 		
+		 		 ",\"scheduled_at_date\":\""+getScheduledAtDate()+" \"" + //scheduled at date date/time yyyy-mm-dd
+		 		",\"scheduled_at_time\":\""+getScheduledAtTime()+" \"" + //scheduled at date date/time 12:00 AM
+		 		",\"status\":\""+getStatus()+"\"" + //STATUS: draft, test, send_now, send_later, personal Send Later, Send Now, Save as Draft			 				 					 		
 		 		"}}";
 		//return jsonString.toString();
 		return params;
 		
 	}
 	public void sendEmail(String url) throws Exception{
+		LOG.debug("Gathering data to send email.");
 		String json = this.generateJSON();
-		System.out.println(json);
 		WebService.httpPost(url, json);
 	}
 	public String getJSONPair(String key, String val){
