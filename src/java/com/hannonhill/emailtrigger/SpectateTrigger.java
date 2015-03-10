@@ -323,15 +323,9 @@ public class SpectateTrigger implements PublishTrigger {
             outReachEmail.setFromType("generic");
             outReachEmail.setFromName("Washoe County");
             outReachEmail.setFromEmail(fromEmail);
-            
-            //if html? create header/footer/main_content
-            //HTML
-            //outReachEmail.setBodyType("text_and_html");
             outReachEmail.setBodyType("html_only");
-            //	outReachEmail.setBodyType("text_only");
             outReachEmail.setLayoutType("custom");
             outReachEmail.setCustomHTMLBody(getRenderedContent(pageAPIObject));
-            //outReachEmail.setHTMLBody(null);
             outReachEmail.setHeader("");
             outReachEmail.setFooter(footer);
             outReachEmail.setCustomType("supplied");
@@ -454,16 +448,7 @@ public class SpectateTrigger implements PublishTrigger {
         String inputLine;
         while ((inputLine = in.readLine()) != null)
         	content.append(inputLine);
-        in.close();
-
-		//Document doc = Jsoup.parse(content.toString());
-
-		//Element head = doc.select("style").first(); //style works
-		//Element body = doc.select("body").first();	
-		//String jsonHead = StringEscapeUtils.escapeJson(head.html());
-		//String jsonBody = StringEscapeUtils.escapeJson(body.html());
-		//String jsonStyle = StringEscapeUtils.escapeJson(doc.select("style").first().html());
-        
+        in.close();    
         LOG.info("Page content successfully read as: " + content);
         String fullContent = StringEscapeUtils.escapeJson(content.toString());
         LOG.info("Page content JSON-escaped as: " + fullContent);
@@ -596,34 +581,8 @@ public class SpectateTrigger implements PublishTrigger {
 	public void setHost(String host) {
 		this.host = host;
 	}
-
-
 	public void setPublishInformation(PublishTriggerInformation information) {
 		// store this in an instance member so invoke() has access to it
 		this.information = information;
-	}
-
-	public static void main(String[] args) throws Exception {
-		/*
-		SpectateTrigger t = new SpectateTrigger();
-		t.setHost("http://localhost:8080");
-		t.setUrlString(t.getHost() + "/ws/services/AssetOperationService?wsdl");
-		t.setSiteId("dfd138510a0000074dc8365b699721cd");
-		t.setApiKey("zDGx49GoEN9QSojPIc6S");
-		t.setWebUrl("http://localhost:8888/Outreach/outreach");
-		t.setUser("admin");
-		t.setPass("admin");
-		t.setSiteName("Outreach");
-		t.getOutreachInfo("dfd157b00a0000074dc8365b8f07b179",
-				"/2015/01/2015-01-12-phone-scams");
-		if (!t.outReachEmail.getName().equals("")) {
-			// populate campaigns
-			t.getSelectedCampaigns();
-			// send email
-			t.outReachEmail.sendEmail(t.getDomain()
-					+ "/marketing/emails?api_key=" + t.getApiKey());
-		}
-	
-		*/
 	}
 }

@@ -125,9 +125,6 @@ public class Email {
 	 * @param body_type the body_type to set
 	 */
 	public void setBodyType(String body_type) {
-	//	if(!body_type.equals("text_only") || !body_type.equals("html_only") || !body_type.equals("text_and_html"))
-		//	this.body_type = "html_only";
-		//else
 			this.body_type = body_type;
 	}
 	/**
@@ -221,30 +218,21 @@ public class Email {
 		String params = "{\"email\":{\"name\":\""+ getName() +"\"" +
 		 		",\"subject\":\""+ getSubject() +"\"" +
 		 		",\"heading\":\""+ getHeader() +"\"" +
-		 	//	",\"subheading\":\""+ getSubHeader() +"\"" +
 		 		",\"footer\":\""+getFooter()+"\"" +
 		 		",\"from_type\":\"generic\"" + //Generic or User
 		 		//Generic
 		 		",\"from_name\":\""+getFromName()+"\"" +
 		 		",\"from_email\":\""+getFromEmail()+"\"" +
 			 	//User
-		 		//	",\"from_user_id\":\"25\"" + //user integer id
 		 		",\"body_type\":\""+ getBodyType() +"\"" + //text_only, html_only, text_and_html
 		 		",\"campaign_ids\":"+outputCampaignIds()+""+
 		 		",\"main_content\":\""+  getTextBody()+"{{unsubscribe_link}}"+"\"" +
-		 		//",\"text_body\":\""+ getTextBody()+"\"" + //text_body
 		 		",\"text_body\":\"\"" + //text_body
-		 		
 		 		//layout type for HTML
 		 		",\"layout_type\":\"custom\"" + //two_column_content_left, two_column_content_right, one_column, custom
 		 		",\"custom_type\":\"supplied\"" + //supplied, existing
 		 		",\"html_body\":null" +
-		 //		",\"custom_email_id\":\"1\"" + //id of custom email
-	//	",\"custom_email_id\":2333" + //id of custom email
-		 //		",\"custom_html_body\":\"<html><head><title>{{ name }}</title></head><body>{{ main_content }}{{ unsubscribe_link }}</body></html>\"" +
-		 	
 		 	",\"custom_html_body\":\"" + getCustomHTMLBody()+"\"" +
-		 		//	",\"suppressed_campaigns_attributes\":{\"id\":\"4680\"}"+
 		 		",\"graphic_id\":null" +
 		 		",\"subheading\":\"\"" +
 		 		",\"logo_id\":null" +
@@ -258,7 +246,6 @@ public class Email {
 		 		",\"status\":\""+getStatus()+"\"" + //STATUS: draft, test, send_now, send_later, personal Send Later, Send Now, Save as Draft			 				 					 		
 		 		"}}";
 		LOG.debug("JSON Params: " + params);
-		//return jsonString.toString();
 		return params;
 		
 	}
