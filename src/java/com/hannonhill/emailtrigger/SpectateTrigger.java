@@ -28,18 +28,21 @@ import com.cms.publish.PublishTrigger;
 import com.cms.publish.PublishTriggerEntityTypes;
 import com.cms.publish.PublishTriggerException;
 import com.cms.publish.PublishTriggerInformation;
-import com.hannonhill.cascade.api.asset.common.BaseAsset;
 import com.hannonhill.cascade.api.asset.common.Identifier;
 import com.hannonhill.cascade.api.asset.common.StructuredDataNode;
 import com.hannonhill.cascade.api.asset.home.Page;
-import com.hannonhill.cascade.api.operation.Edit;
 import com.hannonhill.cascade.api.operation.Read;
-import com.hannonhill.cascade.api.operation.exception.ModelOperationException;
-import com.hannonhill.cascade.api.operation.exception.OperationValidationException;
-import com.hannonhill.cascade.api.operation.result.EditOperationResult;
 import com.hannonhill.cascade.api.operation.result.ReadOperationResult;
 import com.hannonhill.cascade.model.dom.identifier.EntityType;
 import com.hannonhill.cascade.model.dom.identifier.EntityTypes;
+import com.hannonhill.www.ws.ns.AssetOperationService.Asset;
+import com.hannonhill.www.ws.ns.AssetOperationService.AssetOperationHandler;
+import com.hannonhill.www.ws.ns.AssetOperationService.AssetOperationHandlerServiceLocator;
+import com.hannonhill.www.ws.ns.AssetOperationService.Authentication;
+import com.hannonhill.www.ws.ns.AssetOperationService.EntityTypeString;
+import com.hannonhill.www.ws.ns.AssetOperationService.OperationResult;
+import com.hannonhill.www.ws.ns.AssetOperationService.ReadResult;
+import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNodes;
 
 /**
  * Creates a Spectate Email from a Page in Cascade Server
@@ -49,7 +52,7 @@ import com.hannonhill.cascade.model.dom.identifier.EntityTypes;
 public class SpectateTrigger implements PublishTrigger {
 	private Map<String, String> parameters = new HashMap<String, String>();
 	private PublishTriggerInformation information;
-	private String urlString = "https://wcwashoecmsdev.admin.washoecounty.us:8443/ws/services/AssetOperationService?wsdl";
+	private String soapServiceEndpoint = "http://localhost:8080/ws/services/AssetOperationService?wsdl";
 	private String user = "admin";
 	private String pass = "admin";
 	private String host = "";
@@ -96,6 +99,7 @@ public class SpectateTrigger implements PublishTrigger {
             if (url != null && !url.equals(""))
             {
                 t.setHost(url);
+                t.setSoapEndpoint(url + "/ws/services/AssetOperationService?wsdl");
             }
             
             String webUrl = this.parameters.get("webUrl");
@@ -125,7 +129,7 @@ public class SpectateTrigger implements PublishTrigger {
                     String id = jsonResponseObject.getJSONObject("email").getString("id");
                     LOG.info("Email created with id: " + id);
                     // set the field in Cascade
-                    updateSentStatus(information.getEntityId(), information.getEntityPath());
+                    t.updateSentStatus(information.getEntityId(), information.getEntityPath());
                 }
             }
             break;
@@ -136,46 +140,44 @@ public class SpectateTrigger implements PublishTrigger {
             LOG.error("Something went wrong. Logging error and continuing", e);
         }
 	}
-/*
- * Update Email Sent field on an Outreach Page
- * 
- */
-	private void updateSentStatus(final String id, String path) throws ModelOperationException, OperationValidationException{
-		LOG.info("Setting Email Send status to : Sent");
-		//Another page read?
-	       Read readPage = new Read();
-	        Identifier identifier = new Identifier()
-	        {
-	            
-	            public EntityType getType()
-	            {
-	                return EntityTypes.TYPE_PAGE;
-	            }
-	            
-	            public String getId()
-	            {
-	                return id;
-	            }
-	        };
-	        
-	        readPage.setToRead(identifier);
-	        readPage.setUsername(getUser());
-	        ReadOperationResult result = (ReadOperationResult) readPage.perform();
-	        Page page = (Page) result.getAsset();
-		//Using page variable
-	    // Page page = getOutReachPage();
-		
-		if(page == null){
-			LOG.info("Page Asset is Empty. Exiting.");
-			return;
-		}
-		LOG.info("Setting send node to sent.");
-		page.getStructuredDataNode("send").setTextValue("sent");		
-		Edit editPage = new Edit();       
-        editPage.setUsername(getUser());
-        editPage.setAsset((BaseAsset)page);
-	    EditOperationResult editResult = (EditOperationResult) editPage.perform();
-		LOG.debug("Page Edited?");
+
+    /**
+     * Update Email 'send' field to 'Sent to Spectate already' for Outreach page
+     */
+    private void updateSentStatus(String id, String path) throws Exception
+    {
+        LOG.info("Setting Email 'send' field to: ' for page with id: " + id + " and path: " + path);
+        com.hannonhill.www.ws.ns.AssetOperationService.Identifier identifier = new com.hannonhill.www.ws.ns.AssetOperationService.Identifier(id, null, EntityTypeString.page, false);
+        Authentication auth = new Authentication();
+        auth.setUsername(getUser());
+        auth.setPassword(getPass());
+        URL url = new URL(getSoapEndpoint());
+        AssetOperationHandler handler = new AssetOperationHandlerServiceLocator().getAssetOperationService(url);
+        ReadResult readResult = handler.read(auth, identifier);
+        if (!"true".equals(readResult.getSuccess()))
+            throw new Exception("Error reading page: " + id + " with path: " + path + " via WS to update its sent status. " + readResult.getMessage());
+        
+        LOG.info("Succesfully read page with id: " + id + " and path: " + path + " for updating its 'send' status field");
+        Asset asset = readResult.getAsset();
+        if (asset == null || asset.getPage() == null)
+            throw new Exception("No asset in read result when reading page: " + id + " with path: " + path + " via WS to update its sent status");
+        
+        com.hannonhill.www.ws.ns.AssetOperationService.Page page = asset.getPage();
+        StructuredDataNodes nodes = page.getStructuredData().getStructuredDataNodes();
+        com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNode[] nodesArr = nodes.getStructuredDataNode();
+        for (com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNode node : nodesArr)
+        {
+            String nodeIdentifier = node.getIdentifier();
+            if ("send".equals(nodeIdentifier))
+            {
+                node.setText("Sent to Spectate already");
+            }
+        }
+        OperationResult editResult = handler.edit(auth, asset);
+        if (!"true".equals(editResult.getSuccess()))
+            throw new Exception("Error editing page: " + id + " with path: " + path + " via WS to update its sent status. " + readResult.getMessage());
+        
+        LOG.info("Page with id: " + id + " and path: " + path + " successfully edited to update sent status.");
 	}
 	/*
 	 * Gather Page parameters
@@ -500,30 +502,24 @@ public class SpectateTrigger implements PublishTrigger {
 		String email = getParameter(getLead(id), "lead", "email");
 		return email;
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.cms.publish.PublishTrigger#setParameter(java.lang.String,
-	 * java.lang.String)
-	 */
+	
 	public void setParameter(String name, String value) {
 		// let's just store our parameters in a Map for access later
 		parameters.put(name, value);
 	}
 
 	/**
-	 * @return Returns the urlString.
+	 * @return Returns the soapServiceEndpoint.
 	 */
-	public String getUrlString() {
-		return urlString;
+	public String getSoapEndpoint() {
+		return soapServiceEndpoint;
 	}
 
 	/**
-	 * @param urlString the urlString to set
+	 * @param soapServiceEndpoint the soapEndpoint to set
 	 */
-	public void setUrlString(String urlString) {
-		this.urlString = urlString;
+	public void setSoapEndpoint(String soapServiceEndpoint) {
+		this.soapServiceEndpoint = soapServiceEndpoint;
 	}
 
 	/**
