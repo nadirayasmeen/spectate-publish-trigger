@@ -43,7 +43,6 @@ public class WebService {
 	}
 	public static String httpPost(String urlStr, String parameters) throws Exception {
 		LOG.info("Sending POST request to: " + urlStr + " with parama: " + parameters);
-		StringBuffer response = new StringBuffer();
 		URL url = new URL(urlStr);
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 
@@ -61,28 +60,35 @@ public class WebService {
 		out.flush();
 		out.close();
 
+        StringBuffer response = new StringBuffer();
+        BufferedReader in = null;
         try
         {
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String line = null;
             while ((line = in.readLine()) != null) {
                 response.append(line);
             }
-            in.close();
         }
         catch (IOException e) 
         {
-            throw new Exception("Error occurred reading responsde body from post to: " 
+            throw new Exception("Post to: " + urlStr + " failed. Error occurred reading response body from post to: " 
                     + urlStr + " failed. HTTP response code : " + conn.getResponseCode() + " " + conn.getResponseMessage()); 
         }
+        finally 
+        {
+            if (in != null)
+                in.close();
+            conn.disconnect();
             
+        }
+
         int responseCode = conn.getResponseCode();
         if (responseCode != 200 && responseCode != 201) {
             throw new Exception("Post to: " + urlStr + " failed. HTTP response code : "
                     + conn.getResponseCode() + " " + conn.getResponseMessage()
                     + ". Response body: " + response.toString());
         }
-        conn.disconnect();
         LOG.info("Email successfully created with reseponse code: " + responseCode + " and body: " + response);
         return response.toString();
     }
