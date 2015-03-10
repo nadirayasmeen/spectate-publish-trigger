@@ -252,7 +252,7 @@ public class Email {
 		 		",\"extended_content\":null" +
 		 		",\"polished_html_body\":null" +
 		 		",\"polished_text_body\":null" +
-		 		 ",\"test_emails\":\""+getTestReceipients()+"\"" + //comma separated listed of emails
+		 		 ",\"test_emails\":" + (getTestReceipients() == null ? "null" : "\""+getTestReceipients()+"\"") + //comma separated listed of emails
 		 		 ",\"scheduled_at_date\":\""+getScheduledAtDate()+"\"" + //scheduled at date date/time yyyy-mm-dd
 		 		",\"scheduled_at_time\":\""+getScheduledAtTime()+"\"" + //scheduled at date date/time 12:00 AM
 		 		",\"status\":\""+getStatus()+"\"" + //STATUS: draft, test, send_now, send_later, personal Send Later, Send Now, Save as Draft			 				 					 		
