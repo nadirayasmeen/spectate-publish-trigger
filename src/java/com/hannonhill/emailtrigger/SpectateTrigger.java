@@ -110,6 +110,10 @@ public class SpectateTrigger implements PublishTrigger {
             if (user != null && user.length() > 0)
                 t.setUser(user);
 
+            String password = this.parameters.get("pass");
+            if (password != null && !password.isEmpty())
+                t.setPass(password);
+
             try {
                 LOG.debug("Start creating Spectate Data if necessary...");
                 t.getOutreachInfo(information.getEntityId(), information.getEntityPath());
