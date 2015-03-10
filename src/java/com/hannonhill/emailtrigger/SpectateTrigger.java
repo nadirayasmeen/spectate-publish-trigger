@@ -75,10 +75,10 @@ public class SpectateTrigger implements PublishTrigger {
         // page or file is being published
         switch (information.getEntityType()) {
         case PublishTriggerEntityTypes.TYPE_FILE:
-            LOG.info("File publish. Skipping trigger.");
+            LOG.debug("File publish. Skipping trigger.");
             break;
         case PublishTriggerEntityTypes.TYPE_PAGE:
-            LOG.info("Publishing page with path " + information.getEntityPath() + " and id " + information.getEntityId());
+            LOG.debug("Publishing page with path " + information.getEntityPath() + " and id " + information.getEntityId());
             
             if(!publishingSpectateConfiguration(information, parameters)) {
                 LOG.debug("Not publishing a Spectate page configuration. Skipping rest of trigger");
@@ -90,7 +90,7 @@ public class SpectateTrigger implements PublishTrigger {
             String apiKey = this.parameters.get("apiKey");
             if (apiKey == null || apiKey.equals(""))
             {
-                LOG.info("No apiKey present. Skipping rest of trigger.");
+                LOG.debug("No apiKey present. Skipping rest of trigger.");
                 return;
             }
             t.setApiKey(apiKey);
@@ -111,23 +111,23 @@ public class SpectateTrigger implements PublishTrigger {
                 t.setUser(user);
 
             try {
-                LOG.info("Start creating Spectate Data if necessary...");
+                LOG.debug("Start creating Spectate Data if necessary...");
                 t.getOutreachInfo(information.getEntityId(), information.getEntityPath());
             } catch (Exception e) {
-                LOG.info("Error occurred when gathering data to send to Spectate", e);
+                LOG.debug("Error occurred when gathering data to send to Spectate", e);
             }
             if (!t.outReachEmail.getName().equals("")) {
                 // populate campaigns
                 t.getSelectedCampaigns();
                 // send email
                 String jsonResponse = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails.json?api_key=" + t.getApiKey());
-                LOG.info("Email create response for: " + t.pageAPIObject.getIdentifer().getId() + " was: " + jsonResponse);
+                LOG.debug("Email create response for: " + t.pageAPIObject.getIdentifer().getId() + " was: " + jsonResponse);
                 
                 if (jsonResponse != null && !jsonResponse.isEmpty())
                 {
                     JSONObject jsonResponseObject = new JSONObject(jsonResponse);
                     String id = jsonResponseObject.getJSONObject("email").getString("id");
-                    LOG.info("Email created with id: " + id);
+                    LOG.debug("Email created with id: " + id);
                     // set the field in Cascade
                     t.updateSentStatus(information.getEntityId(), information.getEntityPath());
                 }
@@ -146,7 +146,7 @@ public class SpectateTrigger implements PublishTrigger {
      */
     private void updateSentStatus(String id, String path) throws Exception
     {
-        LOG.info("Setting Email 'send' field to: ' for page with id: " + id + " and path: " + path);
+        LOG.debug("Setting Email 'send' field to: ' for page with id: " + id + " and path: " + path);
         com.hannonhill.www.ws.ns.AssetOperationService.Identifier identifier = new com.hannonhill.www.ws.ns.AssetOperationService.Identifier(id, null, EntityTypeString.page, false);
         Authentication auth = new Authentication();
         auth.setUsername(getUser());
@@ -157,7 +157,7 @@ public class SpectateTrigger implements PublishTrigger {
         if (!"true".equals(readResult.getSuccess()))
             throw new Exception("Error reading page: " + id + " with path: " + path + " via WS to update its sent status. " + readResult.getMessage());
         
-        LOG.info("Succesfully read page with id: " + id + " and path: " + path + " for updating its 'send' status field");
+        LOG.debug("Succesfully read page with id: " + id + " and path: " + path + " for updating its 'send' status field");
         Asset asset = readResult.getAsset();
         if (asset == null || asset.getPage() == null)
             throw new Exception("No asset in read result when reading page: " + id + " with path: " + path + " via WS to update its sent status");
@@ -177,7 +177,7 @@ public class SpectateTrigger implements PublishTrigger {
         if (!"true".equals(editResult.getSuccess()))
             throw new Exception("Error editing page: " + id + " with path: " + path + " via WS to update its sent status. " + readResult.getMessage());
         
-        LOG.info("Page with id: " + id + " and path: " + path + " successfully edited to update sent status.");
+        LOG.debug("Page with id: " + id + " and path: " + path + " successfully edited to update sent status.");
 	}
 	/*
 	 * Gather Page parameters
@@ -204,14 +204,14 @@ public class SpectateTrigger implements PublishTrigger {
         pageAPIObject = (Page) result.getAsset();
         
         if (pageAPIObject != null) {
-            LOG.info("Page: " + pageAPIObject.getIdentifer().getId() + " was successfully read from the API");
+            LOG.debug("Page: " + pageAPIObject.getIdentifer().getId() + " was successfully read from the API");
             
 
             // return unless page has a DD called "Outreach"
             String ddPath = pageAPIObject.getDataDefinitionPath();
             if (ddPath == null || !ddPath.equals("Outreach"))
             {
-                LOG.info("Page's DD is: " + ddPath + ". Skipping rest of trigger.");
+                LOG.debug("Page's DD is: " + ddPath + ". Skipping rest of trigger.");
                 return;
             }
             
@@ -219,7 +219,7 @@ public class SpectateTrigger implements PublishTrigger {
             StructuredDataNode email = pageAPIObject.getStructuredDataNode("email");
             if (email == null || !Arrays.asList(email.getTextValues()).contains("Yes"))
             {
-                LOG.info("This page is not set to send email on publish. Skipping rest of trigger.");
+                LOG.debug("This page is not set to send email on publish. Skipping rest of trigger.");
                 return;
             }
             
@@ -229,25 +229,25 @@ public class SpectateTrigger implements PublishTrigger {
             String sendStatusTextValue = sendStatus.getTextValue();
             if ("Sent to Spectate already".equals(sendStatusTextValue))
             {
-                LOG.info("Email for page: " + pageAPIObject.getIdentifer().getId() + " has already been sent to Spectate. Skipping rest of trigger to avoid duplicate email");
+                LOG.debug("Email for page: " + pageAPIObject.getIdentifer().getId() + " has already been sent to Spectate. Skipping rest of trigger to avoid duplicate email");
                 return;
             }
             else if("Later".equals(sendStatusTextValue))
             {
-                LOG.info("Setting email status to 'send_later'");
+                LOG.debug("Setting email status to 'send_later'");
                 status = "send_later";
             }
             else if ("Now".equals(sendStatusTextValue))
             {
-                LOG.info("Setting email status to 'send_now'");
+                LOG.debug("Setting email status to 'send_now'");
                 status = "send_now";
             }
             else 
             {
-                LOG.info("Setting email status to 'draft'");
+                LOG.debug("Setting email status to 'draft'");
                 status = "draft";
             }
-            LOG.info("Page: " + pageAPIObject.getIdentifer().getId() + " uses the Outreach data definition and is marked to send email on publish");
+            LOG.debug("Page: " + pageAPIObject.getIdentifer().getId() + " uses the Outreach data definition and is marked to send email on publish");
 
 			String title = pageAPIObject.getMetadata().getTitle();
 
@@ -270,36 +270,36 @@ public class SpectateTrigger implements PublishTrigger {
 
 				if (name.equals("abstract")) {
 					abstractContent = value;
-                    LOG.info("Set 'abstract' content to: " + value);
+                    LOG.debug("Set 'abstract' content to: " + value);
 				}
 				else if (name.equals("template")) {
 					template=value;
-                    LOG.info("Set 'template' content to: " + value);
+                    LOG.debug("Set 'template' content to: " + value);
 				}
 				else if (name.equals("fromEmail")) {
 					fromEmail=value;
-                    LOG.info("Set 'fromEmail' to: " + value);
+                    LOG.debug("Set 'fromEmail' to: " + value);
 				}
 				else if (name.equals("content")) {
 					content = value;
-					LOG.info("Set 'content' to: " + value);
+					LOG.debug("Set 'content' to: " + value);
 				}
 				else if (name.equals("schedule") && value != null) { // Date
 					day = new SimpleDateFormat("yyyy-MM-dd").format(Long.parseLong(value));
-					LOG.info("Set 'Scheduled Day' to: " + day);
+					LOG.debug("Set 'Scheduled Day' to: " + day);
 					time = new SimpleDateFormat("h:mm a").format(Long.parseLong(value));
-					LOG.info("Set 'Scheduled Time' to: " + time);
+					LOG.debug("Set 'Scheduled Time' to: " + time);
 						
 				}
 				else if(name.equals("testers")){
 					testRecepients = value;
-					LOG.info("Set 'testRecipients' to: " + value);
+					LOG.debug("Set 'testRecipients' to: " + value);
 				}
 				// campaign
 				else if (name.equals("list")) {
 					for (String n : values) {
 						if (!n.isEmpty()) {
-							LOG.info("Adding Campaign: " + n);
+							LOG.debug("Adding Campaign: " + n);
 							campaignNames.add(n);
 						}
 					}
@@ -364,7 +364,7 @@ public class SpectateTrigger implements PublishTrigger {
 
 	// Gets ALL campaigns
 	private String getCampaigns() throws IOException {
-        LOG.info("Retrieving campaigns from Spectate");
+        LOG.debug("Retrieving campaigns from Spectate");
 		String reply = WebService.httpGet(getDomain()
 				+ "/marketing/campaigns.json?api_key=" + getApiKey()
 				+ "&per_page=1");
@@ -374,7 +374,7 @@ public class SpectateTrigger implements PublishTrigger {
 				+ "/marketing/campaigns.json?api_key=" + getApiKey()
 				+ "&per_page=" + total);
 		
-		LOG.info(total + " total campaign objects retrieved from Spectate");
+		LOG.debug(total + " total campaign objects retrieved from Spectate");
 		return reply;
 	}
 
@@ -449,9 +449,9 @@ public class SpectateTrigger implements PublishTrigger {
         while ((inputLine = in.readLine()) != null)
         	content.append(inputLine);
         in.close();    
-        LOG.info("Page content successfully read as: " + content);
+        LOG.debug("Page content successfully read as: " + content);
         String fullContent = StringEscapeUtils.escapeJson(content.toString());
-        LOG.info("Page content JSON-escaped as: " + fullContent);
+        LOG.debug("Page content JSON-escaped as: " + fullContent);
         return fullContent;
 	}
 

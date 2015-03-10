@@ -42,7 +42,7 @@ public class WebService {
 		return sb.toString();
 	}
 	public static String httpPost(String urlStr, String parameters) throws Exception {
-		LOG.info("Sending POST request to: " + urlStr + " with parama: " + parameters);
+		LOG.debug("Sending POST request to: " + urlStr + " with parama: " + parameters);
 		URL url = new URL(urlStr);
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 
@@ -89,7 +89,7 @@ public class WebService {
                     + conn.getResponseCode() + " " + conn.getResponseMessage()
                     + ". Response body: " + response.toString());
         }
-        LOG.info("Email successfully created with reseponse code: " + responseCode + " and body: " + response);
+        LOG.debug("Email successfully created with reseponse code: " + responseCode + " and body: " + response);
         return response.toString();
     }
 }
