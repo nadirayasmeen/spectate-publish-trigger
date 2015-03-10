@@ -117,10 +117,16 @@ public class SpectateTrigger implements PublishTrigger {
                 t.getSelectedCampaigns();
                 // send email
                 String jsonResponse = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails.json?api_key=" + t.getApiKey());
-                //Check what response contains
                 LOG.info("Email create response for: " + t.pageAPIObject.getIdentifer().getId() + " was: " + jsonResponse);
-                // set the field in Cascade
-                updateSentStatus(information.getEntityId(), information.getEntityPath());
+                
+                if (jsonResponse != null && !jsonResponse.isEmpty())
+                {
+                    JSONObject jsonResponseObject = new JSONObject(jsonResponse);
+                    String id = jsonResponseObject.getJSONObject("email").getString("id");
+                    LOG.info("Email created with id: " + id);
+                    // set the field in Cascade
+                    updateSentStatus(information.getEntityId(), information.getEntityPath());
+                }
             }
             break;
 		}
