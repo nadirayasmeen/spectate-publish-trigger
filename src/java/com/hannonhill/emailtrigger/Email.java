@@ -266,7 +266,8 @@ public class Email {
 	public String sendEmail(String url) throws Exception{
         LOG.debug("Gathering data to send email.");
 		String json = this.generateJSON();
-		return WebService.httpPost(url, json);
+		String jsonResponse = WebService.httpPost(url, json);
+		return jsonResponse;
 	}
 	public String getJSONPair(String key, String val){
 		if(!val.isEmpty() || val != null){

@@ -11,7 +11,6 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,9 +116,9 @@ public class SpectateTrigger implements PublishTrigger {
                 // populate campaigns
                 t.getSelectedCampaigns();
                 // send email
-                String response = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails.json?api_key=" + t.getApiKey());
+                String jsonResponse = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails.json?api_key=" + t.getApiKey());
                 //Check what response contains
-                LOG.info("Email create response for: " + t.pageAPIObject.getIdentifer().getId() + " was: " + response);
+                LOG.info("Email create response for: " + t.pageAPIObject.getIdentifer().getId() + " was: " + jsonResponse);
                 // set the field in Cascade
                 updateSentStatus(information.getEntityId(), information.getEntityPath());
             }

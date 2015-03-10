@@ -67,7 +67,7 @@ public class WebService {
 		    // TODO: fail gracefully here
 		}
 		else if (responseCode != 200 && responseCode != 201) {
-		    throw new RuntimeException("Post to: " + urlStr + " failed: HTTP response code : "
+		    throw new Exception("Post to: " + urlStr + " failed: HTTP response code : "
                        + conn.getResponseCode() + " " + conn.getResponseMessage());
 		}
 		
