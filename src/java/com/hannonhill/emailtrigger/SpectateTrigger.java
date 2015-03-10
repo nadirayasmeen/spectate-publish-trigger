@@ -4,46 +4,19 @@
  */
 package com.hannonhill.emailtrigger;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import com.cms.publish.PublishTrigger;
 import com.cms.publish.PublishTriggerEntityTypes;
 import com.cms.publish.PublishTriggerException;
 import com.cms.publish.PublishTriggerInformation;
-import com.hannonhill.cascade.api.asset.common.Identifier;
-import com.hannonhill.cascade.api.asset.common.StructuredDataNode;
 import com.hannonhill.cascade.api.asset.home.Page;
-import com.hannonhill.cascade.api.operation.Read;
-import com.hannonhill.cascade.api.operation.result.ReadOperationResult;
-import com.hannonhill.cascade.model.dom.identifier.EntityType;
-import com.hannonhill.cascade.model.dom.identifier.EntityTypes;
-import com.hannonhill.www.ws.ns.AssetOperationService.Asset;
-import com.hannonhill.www.ws.ns.AssetOperationService.AssetOperationHandler;
-import com.hannonhill.www.ws.ns.AssetOperationService.AssetOperationHandlerServiceLocator;
-import com.hannonhill.www.ws.ns.AssetOperationService.Authentication;
-import com.hannonhill.www.ws.ns.AssetOperationService.EntityTypeString;
-import com.hannonhill.www.ws.ns.AssetOperationService.OperationResult;
-import com.hannonhill.www.ws.ns.AssetOperationService.ReadResult;
-import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNodes;
-
 /**
  * Creates a Spectate Email from a Page in Cascade Server
  * 
