@@ -42,7 +42,7 @@ public class WebService {
 		return sb.toString();
 	}
 	public static String httpPost(String urlStr, String parameters) throws Exception {
-		LOG.debug("Sending POST request to: " + urlStr + " with parama: " + parameters);
+		LOG.info("Sending POST request to: " + urlStr + " with parama: " + parameters);
 		StringBuffer response = new StringBuffer();
 		URL url = new URL(urlStr);
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
