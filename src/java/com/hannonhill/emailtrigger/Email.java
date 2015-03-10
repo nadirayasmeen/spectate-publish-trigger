@@ -5,8 +5,6 @@
  */
 package com.hannonhill.emailtrigger;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -264,8 +262,9 @@ public class Email {
 		return params;
 		
 	}
-	public int sendEmail(String url) throws Exception{
-		LOG.debug("Gathering data to send email.");
+
+	public String sendEmail(String url) throws Exception{
+        LOG.debug("Gathering data to send email.");
 		String json = this.generateJSON();
 		return WebService.httpPost(url, json);
 	}

@@ -117,14 +117,11 @@ public class SpectateTrigger implements PublishTrigger {
                 // populate campaigns
                 t.getSelectedCampaigns();
                 // send email
-                int statusCode = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails.json?api_key=" + t.getApiKey());
+                String response = t.outReachEmail.sendEmail(t.getDomain() + "/marketing/emails.json?api_key=" + t.getApiKey());
                 //Check what response contains
-                LOG.info("Status Code: " + statusCode);
-                if(statusCode == 201){
-                	//set the field in Cascade
-                	updateSentStatus(information.getEntityId(), information.getEntityPath());
-                }
-                
+                LOG.info("Email create response for: " + t.pageAPIObject.getIdentifer().getId() + " was: " + response);
+                // set the field in Cascade
+                updateSentStatus(information.getEntityId(), information.getEntityPath());
             }
             break;
 		}

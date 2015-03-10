@@ -41,11 +41,9 @@ public class WebService {
 		conn.disconnect();
 		return sb.toString();
 	}
-	public static int httpPost(String urlStr, String parameters)
-			throws Exception {
-		LOG.debug("Creating POST Request for Spectate");
-		//StringBuffer response = new StringBuffer();
-		int response = -1;
+	public static String httpPost(String urlStr, String parameters) throws Exception {
+		LOG.debug("Sending POST request to: " + urlStr + " with parama: " + parameters);
+		StringBuffer response = new StringBuffer();
 		try {
 		URL url = new URL(urlStr);
 			HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
@@ -57,37 +55,36 @@ public class WebService {
 			conn.setDoInput(true);
 			conn.setAllowUserInteraction(true);
 			conn.setRequestProperty("Content-Type", "application/json");
+			conn.setRequestProperty("Accept", "application/json");
 
-			 OutputStream out = conn.getOutputStream();
-			 out.write(parameters.getBytes());
-			 out.flush();
-			 out.close();
-				if(conn.getResponseCode() == 206){
-					//If 206?? Already exists?? Update
-					
-						
-					}
-				
-			if (conn.getResponseCode() != 200) {
-				throw new RuntimeException("Email Creation Failed : HTTP error code : "
-						+ conn.getResponseCode() + " "
-						+ conn.getResponseMessage() + ": " + conn.getURL());
+			OutputStream out = conn.getOutputStream();
+			out.write(parameters.getBytes());
+			out.flush();
+			out.close();
+			int responseCode = conn.getResponseCode();
+			if(responseCode == 206){
+			    // seems to be when Email by that name already exists in the account
+			    // TODO: fail gracefully here
+			}
+			else if (responseCode != 200 && responseCode != 201) {
+			    throw new RuntimeException("Post to: " + urlStr + " failed: HTTP response code : "
+	                       + conn.getResponseCode() + " " + conn.getResponseMessage());
 
 			}
-
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					conn.getInputStream()));
-
-		/*	while (in.readLine() != null) {
-				response.append(in.readLine());
-			}*/
-			response = conn.getResponseCode();
-			LOG.debug("Email successfully created.");
-			in.close();
-			conn.disconnect();
+			
+		    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+           
+           String line = null;
+           while ((line = in.readLine()) != null) {
+               response.append(line);
+           }
+           
+           LOG.info("Email successfully created with reseponse code: " + responseCode + " and body: " + response);
+           in.close();
+           conn.disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return response;
+		return response.toString();
 	}
 }
