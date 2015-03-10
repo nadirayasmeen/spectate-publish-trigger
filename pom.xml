@@ -119,9 +119,6 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.6</version>
                 <configuration>
-                    <includes>
-                        <include>**/emailtrigger/**</include>
-                    </includes>
                 </configuration>
             </plugin>
         </plugins>
