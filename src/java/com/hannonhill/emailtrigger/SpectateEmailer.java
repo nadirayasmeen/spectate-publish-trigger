@@ -51,7 +51,6 @@ public class SpectateEmailer {
 	private String apiKey = null;
 	private String domain = "https://my.spectate.com";
 	private Map<String, String> allCampaigns = new HashMap<String,String>(); // id, name																// address
-	private Map<String, Campaign> campaigns = new HashMap<String, Campaign>();
 	private Email outReachEmail = new Email();
 	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
 	private Page pageAPIObject = null;
@@ -285,7 +284,7 @@ public class SpectateEmailer {
 					.getJSONObject("campaign");
 			String name = o.get("name").toString();
 			String id = o.get("id").toString();
-			allCampaigns.put(name, id);
+			getAllCampaigns().put(name, id);
 		}
 	}
 
@@ -293,37 +292,18 @@ public class SpectateEmailer {
 		// get ALL campaigns
 		try {
 			this.getAllCampaigns(this.getCampaigns());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 			LOG.debug("Retrieving campaign ID(s) for selected campaign(s) Name.");
 		for (String name : campaignNames) {
-			String id = allCampaigns.get(name);
+			String id = getAllCampaigns().get(name);
 
 			if (id != null) {
-				List<String> leads = new ArrayList<String>();
-				List<String> emailAddresses = new ArrayList<String>();
-				// get leads for this campaign
-				try {
-					leads = getLeads(id);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if (!leads.isEmpty()) {
-					// get Emails for each
-					for (String l : leads) {
-						emailAddresses.add(getLeadEmail(l));
-					}
-				}
 				LOG.debug("Adding selected ID to list of campaign IDs.");
 				// campaign exists add to selected campaigns
 				getOutReachEmail().getCampaignIds().add(Integer.parseInt(id));
-				campaigns.put(id, new Campaign(id, name, emailAddresses));
 			}
 		}
 	}
@@ -352,42 +332,6 @@ public class SpectateEmailer {
         LOG.debug("Page content JSON-escaped as: " + fullContent);
         return fullContent;
 	}
-
-	private JSONObject getLead(String id) throws IOException {
-		String leadURL = getDomain() + "/leads_visitors/leads/" + id
-				+ ".json?api_key=" + getApiKey();
-		String reply = WebService.httpGet(leadURL);
-		JSONObject jsonObject = new JSONObject(reply);
-		return jsonObject;
-	}
-
-	// returns a string of ids to look up
-	private List<String> getLeads(String campaignID) throws IOException {
-		Document doc = Jsoup.connect(
-				this.getDomain()
-						+ "/marketing/campaigns/datatables/leads.html?api_key="
-						+ this.getApiKey() + "&id=" + campaignID).get();
-		Elements leads = doc.select("#leads_datatable_body tr:has(input)"); // read
-																			// form
-																			// input
-		List<String> ids = new ArrayList<String>();
-
-		for (Element e : leads) {
-			String id = e.select("td input").attr("value");
-			String name = e.select("td:eq(1) a").get(0).text();
-			ids.add(id);
-		}
-
-		return ids;
-	}
-
-	private String getLeadEmail(String id) throws IOException {
-		String email = getParameter(getLead(id), "lead", "email");
-		return email;
-	}
-	
-
-
 	/**
 	 * @return Returns the soapServiceEndpoint.
 	 */
@@ -455,6 +399,12 @@ public class SpectateEmailer {
 	}
 	public Page getPageAPIObject() {
 		return pageAPIObject;
+	}
+	public Map<String, String> getAllCampaigns() {
+		return allCampaigns;
+	}
+	public void setAllCampaigns(Map<String, String> allCampaigns) {
+		this.allCampaigns = allCampaigns;
 	}
 	public void setPageAPIObject(Page pageAPIObject) {
 		this.pageAPIObject = pageAPIObject;
