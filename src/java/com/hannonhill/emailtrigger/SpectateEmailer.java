@@ -111,14 +111,15 @@ public class SpectateEmailer {
         readPage.setToRead(identifier);
         readPage.setUsername(getUser());
         ReadOperationResult result = (ReadOperationResult) readPage.perform();
-        setPageAPIObject((Page) result.getAsset());
+        pageAPIObject = (Page) result.getAsset();
+        setPageAPIObject(pageAPIObject);
         
-        if (getPageAPIObject() != null) {
-            LOG.debug("Page: " + getPageAPIObject().getIdentifer().getId() + " was successfully read from the API");
+        if (pageAPIObject != null) {
+            LOG.debug("Page: " + pageAPIObject.getIdentifer().getId() + " was successfully read from the API");
             
 
             // return unless page has a DD called "Outreach"
-            String ddPath = getPageAPIObject().getDataDefinitionPath();
+            String ddPath = pageAPIObject.getDataDefinitionPath();
             if (ddPath == null || !ddPath.equals("Outreach"))
             {
                 LOG.debug("Page's DD is: " + ddPath + ". Skipping rest of trigger.");
@@ -126,7 +127,7 @@ public class SpectateEmailer {
             }
             
             // return unless email field is set to "Yes"
-            StructuredDataNode email = getPageAPIObject().getStructuredDataNode("email");
+            StructuredDataNode email = pageAPIObject.getStructuredDataNode("email");
             if (email == null || !Arrays.asList(email.getTextValues()).contains("Yes"))
             {
                 LOG.debug("This page is not set to send email on publish. Skipping rest of trigger.");
@@ -134,12 +135,12 @@ public class SpectateEmailer {
             }
             
             // check send status
-            StructuredDataNode sendStatus = getPageAPIObject().getStructuredDataNode("send");
+            StructuredDataNode sendStatus = pageAPIObject.getStructuredDataNode("send");
             String status = "draft";
             String sendStatusTextValue = sendStatus.getTextValue();
             if ("Sent to Spectate already".equals(sendStatusTextValue))
             {
-                LOG.debug("Email for page: " + getPageAPIObject().getIdentifer().getId() + " has already been sent to Spectate. Skipping rest of trigger to avoid duplicate email");
+                LOG.debug("Email for page: " + pageAPIObject.getIdentifer().getId() + " has already been sent to Spectate. Skipping rest of trigger to avoid duplicate email");
                 return;
             }
             else if("Later".equals(sendStatusTextValue))
@@ -157,9 +158,8 @@ public class SpectateEmailer {
                 LOG.debug("Setting email status to 'draft'");
                 status = "draft";
             }
-            LOG.debug("Page: " + getPageAPIObject().getIdentifer().getId() + " uses the Outreach data definition and is marked to send email on publish");
-
-			String title = getPageAPIObject().getMetadata().getTitle();
+            LOG.debug("Page: " + pageAPIObject.getIdentifer().getId() + " uses the Outreach data definition and is marked to send email on publish");
+			String title = pageAPIObject.getMetadata().getTitle();
 
 
 			String content = "";
@@ -167,7 +167,7 @@ public class SpectateEmailer {
 			String testRecepients = "";
 			String abstractContent = "";
 			String footer = StringEscapeUtils.escapeJson("<em>Copyright &#169; 2015 Washoe County, All rights reserved.</em>\n    <br />\n\t\t{{ unsubscribe_link }}\n\t\t<br />\n\t\t<strong>Our mailing address is:</strong>\n\t\t<br />\n\t\t{{ spam_compliance_address }}\n");
-			StructuredDataNode[] nodes = getPageAPIObject().getStructuredData();
+			StructuredDataNode[] nodes = pageAPIObject.getStructuredData();
 			String day = null;
 			String time = null;
 			
@@ -210,30 +210,30 @@ public class SpectateEmailer {
 					}
 				}
 			}
-            getOutReachEmail().setName(title);
-            getOutReachEmail().setSubject(title);
-            getOutReachEmail().setTextBody(content);
-            getOutReachEmail().setTestRecepients(testRecepients);
-            getOutReachEmail().setMainContent(content);
+            outReachEmail.setName(title);
+            outReachEmail.setSubject(title);
+            outReachEmail.setTextBody(content);
+            outReachEmail.setTestRecepients(testRecepients);
+            outReachEmail.setMainContent(content);
 
             //if scheduled date has been set but status = now or draft, scheduled date/time needs to be overridden
             if("send_later".equals(status)){
             if (day != null)
-            	getOutReachEmail().setScheduledAtDate(day);
+            	outReachEmail.setScheduledAtDate(day);
             if (time != null)
-            	getOutReachEmail().setScheduledAtTime(time);
+            	outReachEmail.setScheduledAtTime(time);
             }
-            getOutReachEmail().setStatus(status);
+            outReachEmail.setStatus(status);
             // defaults
-            getOutReachEmail().setFromType("generic");
-            getOutReachEmail().setFromName("Washoe County");
-            getOutReachEmail().setFromEmail(fromEmail);
-            getOutReachEmail().setBodyType("html_only");
-            getOutReachEmail().setLayoutType("custom");
-            getOutReachEmail().setCustomHTMLBody(getRenderedContent(getPageAPIObject()));
-            getOutReachEmail().setHeader("");
-            getOutReachEmail().setFooter(footer);
-            getOutReachEmail().setCustomType("supplied");
+            outReachEmail.setFromType("generic");
+            outReachEmail.setFromName("Washoe County");
+            outReachEmail.setFromEmail(fromEmail);
+            outReachEmail.setBodyType("html_only");
+            outReachEmail.setLayoutType("custom");
+            outReachEmail.setCustomHTMLBody(getRenderedContent(getPageAPIObject()));
+            outReachEmail.setHeader("");
+            outReachEmail.setFooter(footer);
+            outReachEmail.setCustomType("supplied");
         }
         else
         {
@@ -284,14 +284,9 @@ public class SpectateEmailer {
 		}
 	}
 
-	public void getSelectedCampaigns() throws IOException {
+	public void getSelectedCampaigns() throws IOException, Exception {
 		// get ALL campaigns
-		try {
 			this.getAllCampaigns(this.getCampaigns());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 			LOG.debug("Retrieving campaign ID(s) for selected campaign(s) Name.");
 		for (String name : campaignNames) {
 			String id = getAllCampaigns().get(name);
