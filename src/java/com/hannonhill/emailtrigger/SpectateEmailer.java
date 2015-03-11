@@ -20,14 +20,10 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import com.hannonhill.cascade.api.asset.home.Page;
 import com.hannonhill.cascade.api.asset.common.Identifier;
 import com.hannonhill.cascade.api.asset.common.StructuredDataNode;
+import com.hannonhill.cascade.api.asset.home.Page;
 import com.hannonhill.cascade.api.operation.Read;
 import com.hannonhill.cascade.api.operation.result.ReadOperationResult;
 import com.hannonhill.cascade.model.dom.identifier.EntityType;

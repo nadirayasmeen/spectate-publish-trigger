@@ -4,9 +4,7 @@
  */
 package com.hannonhill.emailtrigger;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -16,7 +14,6 @@ import com.cms.publish.PublishTrigger;
 import com.cms.publish.PublishTriggerEntityTypes;
 import com.cms.publish.PublishTriggerException;
 import com.cms.publish.PublishTriggerInformation;
-import com.hannonhill.cascade.api.asset.home.Page;
 /**
  * Creates a Spectate Email from a Page in Cascade Server
  * 
@@ -25,21 +22,7 @@ import com.hannonhill.cascade.api.asset.home.Page;
 public class SpectateTrigger implements PublishTrigger {
 	private Map<String, String> parameters = new HashMap<String, String>();
 	private PublishTriggerInformation information;
-	private String soapServiceEndpoint = "http://localhost:8080/ws/services/AssetOperationService?wsdl";
-	private String user = "admin";
-	private String pass = "admin";
-	private String host = "";
-	private String siteId = "cde5bdfe94ba7976308d456098a63f49";
-	private String siteName = "Outreach";
-	private String webUrl = "";
-	private List<String> campaignNames = new ArrayList<String>();
-	private String apiKey = null;
-	private String domain = "https://my.spectate.com";
-	private Map<String, String> allCampaigns = new HashMap<String,String>(); // id, name																// address
-	private Map<String, Campaign> campaigns = new HashMap<String, Campaign>();
-	private Email outReachEmail = new Email();
 	private static final Logger LOG = Logger.getLogger(SpectateTrigger.class);
-	private Page pageAPIObject = null;
 
 	public void invoke() throws PublishTriggerException {
         try {
