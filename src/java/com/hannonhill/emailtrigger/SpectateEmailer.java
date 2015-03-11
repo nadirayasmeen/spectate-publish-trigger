@@ -284,9 +284,9 @@ public class SpectateEmailer {
 		}
 	}
 
-	public void getSelectedCampaigns() throws IOException, Exception {
+	public void getSelectedCampaigns() throws Exception {
 		// get ALL campaigns
-			this.getAllCampaigns(this.getCampaigns());
+			getAllCampaigns(getCampaigns());
 			LOG.debug("Retrieving campaign ID(s) for selected campaign(s) Name.");
 		for (String name : campaignNames) {
 			String id = getAllCampaigns().get(name);
