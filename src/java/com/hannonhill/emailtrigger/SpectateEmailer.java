@@ -212,9 +212,9 @@ public class SpectateEmailer {
 			}
             outReachEmail.setName(title);
             outReachEmail.setSubject(title);
-            outReachEmail.setTextBody(content);
+            outReachEmail.setTextBody(abstractContent);
             outReachEmail.setTestRecepients(testRecepients);
-            outReachEmail.setMainContent(content);
+            outReachEmail.setMainContent(abstractContent);
 
             //if scheduled date has been set but status = now or draft, scheduled date/time needs to be overridden
             if("send_later".equals(status)){
