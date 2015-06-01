@@ -54,7 +54,7 @@ public class SpectateEmailer {
     /**
      * Update Email 'send' field to 'Sent to Spectate already' for Outreach page
      */
-    public void updateSentStatus(String id, String path) throws Exception
+    public void updateSentStatus(String id, String path, String error) throws Exception
     {
         LOG.debug("Setting Email 'send' field to: ' for page with id: " + id + " and path: " + path);
         com.hannonhill.www.ws.ns.AssetOperationService.Identifier identifier = new com.hannonhill.www.ws.ns.AssetOperationService.Identifier(id, null, EntityTypeString.page, false);
@@ -80,7 +80,10 @@ public class SpectateEmailer {
             String nodeIdentifier = node.getIdentifier();
             if ("send".equals(nodeIdentifier))
             {
-                node.setText("Sent to Spectate already");
+            	if(error.isEmpty())
+            		node.setText("Sent to Spectate already");
+            	else
+            		node.setText("Error sending to Spectate");
             }
         }
         OperationResult editResult = handler.edit(auth, asset);
@@ -164,6 +167,7 @@ public class SpectateEmailer {
 
 			String content = "";
 			String fromEmail = "";
+			String emailName= "";
 			String testRecepients = "";
 			String abstractContent = "";
 			String footer = StringEscapeUtils.escapeJson("<em>Copyright &#169; 2015 Washoe County, All rights reserved.</em>\n    <br />\n\t\t{{ unsubscribe_link }}\n\t\t<br />\n\t\t<strong>Our mailing address is:</strong>\n\t\t<br />\n\t\t{{ spam_compliance_address }}\n");
@@ -178,15 +182,19 @@ public class SpectateEmailer {
 				LOG.debug("Current SD node: " + name + " : " + value + " : " + Arrays.toString(values));
 
 				if (name.equals("abstract")) {
-					abstractContent = value;
+					abstractContent = StringEscapeUtils.escapeJson(value);
                     LOG.debug("Set 'abstract' content to: " + value);
 				}
 				else if (name.equals("fromEmail")) {
 					fromEmail=value;
                     LOG.debug("Set 'fromEmail' to: " + value);
 				}
+				else if (name.equals("emailName")){
+					emailName = value;
+					LOG.debug("Set 'emailName' to: " + value);
+				}
 				else if (name.equals("content")) {
-					content = value;
+					content = StringEscapeUtils.escapeJson(value);
 					LOG.debug("Set 'content' to: " + value);
 				}
 				else if (name.equals("schedule") && value != null) { // Date
@@ -210,7 +218,13 @@ public class SpectateEmailer {
 					}
 				}
 			}
-            outReachEmail.setName(title);
+			if(emailName == null)
+				emailName = createEmailName(title, pageAPIObject.getPath());
+			else
+				emailName = createEmailName(emailName, pageAPIObject.getPath());
+			
+			LOG.debug("page path is " + pageAPIObject.getPath());
+            outReachEmail.setName(emailName);
             outReachEmail.setSubject(title);
             outReachEmail.setTextBody(abstractContent);
             outReachEmail.setTestRecepients(testRecepients);
@@ -322,6 +336,14 @@ public class SpectateEmailer {
         String fullContent = StringEscapeUtils.escapeJson(content.toString());
         LOG.debug("Page content JSON-escaped as: " + fullContent);
         return fullContent;
+	}
+	/** 
+	 * @param title
+	 * @param path
+	 * @returns an email name combining the title & path
+	 */
+	private String createEmailName(String title, String path){
+			return new StringBuilder(title).append(" (").append(path).append(")").toString();
 	}
 	/**
 	 * @return Returns the soapServiceEndpoint.
